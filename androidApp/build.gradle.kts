@@ -148,6 +148,7 @@ dependencies {
     implementation(libs.filekit.core)
     implementation(libs.filekit.dialogs.compose)
     implementation(libs.kermit)
+    implementation(libs.moko.permissions.core)
 
     debugImplementation(libs.androidx.ui.tooling)
 }

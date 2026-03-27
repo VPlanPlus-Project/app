@@ -233,7 +233,6 @@ private fun SubjectInstanceSelectionContent(
                 text = "Speichern",
                 state = state.saveState.toButtonState(),
                 icon = CoreUiRes.drawable.arrow_right,
-                modifier = Modifier.padding(bottom = 16.dp),
                 size = ButtonSize.Big,
                 onlyEventOnActive = true,
                 onClick = {

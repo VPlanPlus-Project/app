@@ -1,6 +1,6 @@
 package plus.vplan.app.di
 
-import dev.icerock.moko.permissions.PermissionsController
+import dev.icerock.moko.permissions.ios.PermissionsController
 import kotlinx.cinterop.ExperimentalForeignApi
 import org.koin.core.module.Module
 import org.koin.dsl.module
@@ -32,7 +32,8 @@ actual val platformModule: Module = module {
     single<NotificationRepository> { NotificationRepositoryImpl() }
     single<AuthenticationRepository> { AuthenticationRepositoryImpl() }
     single<BiometricAuthentication> { BiometricAuthenticationImpl() }
-    factory<PermissionRepository> { (controller: PermissionsController) -> PermissionRepositoryImpl(controller) }
+    single<PermissionsController>() { PermissionsController() }
+    single<PermissionRepository> { PermissionRepositoryImpl(get()) }
     single<PlatformRepository> { PlatformRepositoryImpl() }
     single<OpenBiometricSettings> { OpenBiometricSettingsIos() }
 
