@@ -38,7 +38,6 @@ internal fun PermissionsScreen(
     }
 
     PermissionsContent(
-        state = state,
         contentPadding = contentPadding,
         onEvent = viewModel::onEvent
     )
@@ -46,7 +45,6 @@ internal fun PermissionsScreen(
 
 @Composable
 private fun PermissionsContent(
-    state: PermissionsState,
     contentPadding: PaddingValues,
     onEvent: (event: PermissionsEvent) -> Unit,
 ) {
@@ -79,7 +77,7 @@ private fun PermissionsContent(
             modifier = Modifier.padding(bottom = 16.dp),
             onlyEventOnActive = true,
             onClick = {
-                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                haptic.performHapticFeedback(HapticFeedbackType.Confirm)
                 onEvent(PermissionsEvent.Request)
             }
         )
@@ -91,7 +89,6 @@ private fun PermissionsContent(
 private fun PermissionPreview() {
     AppTheme(dynamicColor = false) {
         PermissionsContent(
-            state = PermissionsState(),
             contentPadding = PaddingValues(),
             onEvent = {}
         )

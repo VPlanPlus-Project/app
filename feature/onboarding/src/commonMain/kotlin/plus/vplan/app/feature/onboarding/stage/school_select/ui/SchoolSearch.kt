@@ -22,10 +22,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.core.ui.theme.AppTheme
+import plus.vplan.app.core.ui.util.paddingvalues.copy
 import plus.vplan.app.feature.onboarding.stage.school_select.domain.usecase.OnboardingSchoolOption
 import plus.vplan.app.feature.onboarding.stage.school_select.ui.components.SearchBar
 import plus.vplan.app.feature.onboarding.stage.school_select.ui.components.search_results.Error
@@ -60,15 +62,18 @@ private fun SchoolSearchContent(
     contentPadding: PaddingValues,
     onEvent: (SchoolSearchEvent) -> Unit,
 ) {
+    val localFocusManager = LocalFocusManager.current
+
     val searchBarFocusRequester = remember { FocusRequester() }
     LaunchedEffect(Unit) {
+        if (state.suppressAutoKeyboardOnShow) return@LaunchedEffect
         searchBarFocusRequester.requestFocus()
     }
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surfaceContainerLowest)
-            .padding(contentPadding)
+            .padding(contentPadding.copy(bottom = 0.dp))
     ) {
         Column(
             modifier = Modifier.fillMaxWidth()
@@ -121,7 +126,9 @@ private fun SchoolSearchContent(
                 visible = state.results is SchoolResults.Results && state.searchQuery.isNotBlank(),
                 enter = fadeIn() + slideInVertically { -it/3 },
                 exit = fadeOut(),
-                modifier = Modifier.clipToBounds()
+                modifier = Modifier
+                    .clipToBounds()
+                    .fillMaxSize()
             ) {
                 SearchResults(
                     modifier = Modifier
@@ -129,7 +136,15 @@ private fun SchoolSearchContent(
                         .padding(horizontal = 16.dp),
                     query = state.searchQuery,
                     results = (state.results as? SchoolResults.Results)?.results.orEmpty(),
-                    onEvent = onEvent,
+                    contentPadding = PaddingValues(bottom = 16.dp + contentPadding.calculateBottomPadding()),
+                    onUseSp24School = {
+                        localFocusManager.clearFocus()
+                        onEvent(SchoolSearchEvent.OnUseSp24SchoolClicked)
+                    },
+                    onSelectSchool = {
+                        localFocusManager.clearFocus()
+                        onEvent(SchoolSearchEvent.OnSchoolSelected(it))
+                    }
                 )
             }
         }
@@ -142,7 +157,7 @@ private fun SchoolSearchPreview() {
     AppTheme(dynamicColor = false) {
         SchoolSearchContent(
             state = OnboardingSchoolSearchState(),
-            contentPadding = PaddingValues(),
+            contentPadding = PaddingValues(bottom = 600.dp),
             onEvent = {}
         )
     }
@@ -205,7 +220,7 @@ private fun SchoolSearchResultsPreview() {
                     )
                 )
             ),
-            contentPadding = PaddingValues(),
+            contentPadding = PaddingValues(bottom = 600.dp),
             onEvent = {}
         )
     }

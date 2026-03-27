@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -23,9 +24,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
+import co.touchlab.kermit.Logger
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.core.model.School
-import plus.vplan.app.core.ui.util.paddingvalues.plus
+import plus.vplan.app.core.utils.ui.plus
 import plus.vplan.app.feature.onboarding.domain.model.OnboardingProfile
 import plus.vplan.app.feature.onboarding.stage.finished.ui.FinishedScreen
 import plus.vplan.app.feature.onboarding.stage.loading_data.ui.LoadingDataDialogContent
@@ -67,10 +69,9 @@ fun OnboardingView(
             BlurredBackground()
         }
 
-        val contentPadding = WindowInsets.safeDrawing.asPaddingValues() +
-            PaddingValues(
-                top = 64.dp,
-            )
+        val contentPadding = WindowInsets.safeDrawing.asPaddingValues() + PaddingValues(top = 64.dp)
+
+        Logger.d { "${WindowInsets.ime.asPaddingValues().calculateBottomPadding()} vs ${contentPadding.calculateBottomPadding()}" }
 
         NavDisplay(
             backStack = viewModel.backStack,
@@ -157,8 +158,8 @@ fun OnboardingView(
             visible = viewModel.backStack.lastOrNull().let { it != null && it !is Onboarding.Welcome },
             enter = scaleIn(
                 animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                    stiffness = Spring.StiffnessVeryLow,
+                    dampingRatio = Spring.DampingRatioLowBouncy,
+                    stiffness = Spring.StiffnessLow,
                 )
             ) + slideInVertically(
                 animationSpec = spring(

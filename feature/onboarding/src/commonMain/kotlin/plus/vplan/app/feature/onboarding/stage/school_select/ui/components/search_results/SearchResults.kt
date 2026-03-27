@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -31,19 +32,20 @@ import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.core.ui.components.Button
 import plus.vplan.app.core.ui.theme.displayFontFamily
 import plus.vplan.app.feature.onboarding.stage.school_select.domain.usecase.OnboardingSchoolOption
-import plus.vplan.app.feature.onboarding.stage.school_select.ui.SchoolSearchEvent
 
 @Composable
 fun SearchResults(
     modifier: Modifier = Modifier,
     query: String,
     results: List<OnboardingSchoolOption>,
-    onEvent: (SchoolSearchEvent) -> Unit
+    contentPadding: PaddingValues,
+    onUseSp24School: () -> Unit,
+    onSelectSchool: (school: OnboardingSchoolOption) -> Unit,
 ) {
     val haptic = LocalHapticFeedback.current
     AnimatedContent(
         targetState = query.isNotBlank() && results.isEmpty(),
-        modifier = modifier.fillMaxSize()
+        modifier = modifier.fillMaxSize(),
     ) searchResult@{ hasNoResults ->
         Box(
             modifier = Modifier
@@ -51,7 +53,11 @@ fun SearchResults(
             contentAlignment = Alignment.TopCenter
         ) {
             if (hasNoResults) {
-                Column(Modifier.fillMaxSize()) {
+                Column(
+                    modifier = Modifier
+                        .padding(contentPadding)
+                        .fillMaxSize(),
+                ) {
                     Column(
                         modifier = Modifier
                             .weight(1f, true)
@@ -85,7 +91,7 @@ fun SearchResults(
                     Button(
                         onClick = {
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            onEvent(SchoolSearchEvent.OnUseSp24SchoolClicked)
+                            onUseSp24School()
                         },
                         modifier = Modifier.padding(bottom = 16.dp),
                         text = "Weiter mit $query",
@@ -99,6 +105,7 @@ fun SearchResults(
                 modifier = Modifier
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
+                    .padding(contentPadding)
                     .clip(RoundedCornerShape(16.dp)),
                 verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
@@ -111,7 +118,7 @@ fun SearchResults(
                             .defaultMinSize(minHeight = 48.dp)
                             .clickable {
                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                onEvent(SchoolSearchEvent.OnSchoolSelected(school))
+                                onSelectSchool(school)
                             }
                             .padding(8.dp),
                         verticalArrangement = Arrangement.Center

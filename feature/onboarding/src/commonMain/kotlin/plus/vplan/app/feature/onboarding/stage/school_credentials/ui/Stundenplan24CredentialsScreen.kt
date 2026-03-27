@@ -18,6 +18,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -73,10 +74,19 @@ private fun Stundenplan24CredentialsContent(
     contentPadding: PaddingValues,
     onEvent: (Stundenplan24CredentialsEvent) -> Unit
 ) {
+    val localFocusManager = LocalFocusManager.current
     val haptic = LocalHapticFeedback.current
     val passwordFocusRequester = remember { FocusRequester() }
     LaunchedEffect(Unit) {
-        if (!state.isThisStageFinished) passwordFocusRequester.requestFocus()
+        if (state.suppressKeyboardOnShow) return@LaunchedEffect
+        passwordFocusRequester.requestFocus()
+    }
+
+    LaunchedEffect(state.sp24CredentialsState) {
+        if (state.sp24CredentialsState == Sp24CredentialsState.INVALID) {
+            passwordFocusRequester.requestFocus()
+            haptic.performHapticFeedback(HapticFeedbackType.Reject)
+        }
     }
 
     Column(
@@ -112,6 +122,7 @@ private fun Stundenplan24CredentialsContent(
                 onPasswordChanged = { onEvent(Stundenplan24CredentialsEvent.OnPasswordChanged(it)) },
                 onCheckCredentials = {
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    localFocusManager.clearFocus()
                     onEvent(Stundenplan24CredentialsEvent.OnCheckClicked)
                 },
                 shape = RoundedCornerShape(8.dp),
@@ -128,7 +139,8 @@ private fun Stundenplan24CredentialsContent(
             modifier = Modifier.padding(bottom = 16.dp),
             size = ButtonSize.Big,
             onClick = {
-                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                haptic.performHapticFeedback(HapticFeedbackType.Confirm)
+                localFocusManager.clearFocus()
                 onEvent(Stundenplan24CredentialsEvent.OnCheckClicked)
             }
         )

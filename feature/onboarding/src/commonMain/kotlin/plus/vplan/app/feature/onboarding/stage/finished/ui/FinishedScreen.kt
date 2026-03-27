@@ -53,7 +53,7 @@ internal fun FinishedScreen(
             onlyEventOnActive = true,
             modifier = Modifier.padding(bottom = 16.dp),
             onClick = {
-                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                haptic.performHapticFeedback(HapticFeedbackType.Confirm)
                 onFinish()
             }
         )

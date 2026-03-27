@@ -45,11 +45,14 @@ class Stundenplan24CredentialsViewModel(
 
             is Stundenplan24CredentialsEvent.OnCheckClicked -> {
                 viewModelScope.launch(CoroutineName(this::class.qualifiedName + ".Action.Check")) {
-                    state.update { state -> state.copy(sp24CredentialsState = Sp24CredentialsState.LOADING) }
+                    state.update { state -> state.copy(
+                        sp24CredentialsState = Sp24CredentialsState.LOADING,
+                        suppressKeyboardOnShow = true
+                    ) }
                     val result = checkCredentialsUseCase(
                         state.value.sp24Id!!,
                         state.value.username,
-                        state.value.password
+                        state.value.password,
                     )
                     when (result) {
                         is Sp24LookupResult.NetworkError -> state.update { state ->
@@ -93,6 +96,10 @@ class Stundenplan24CredentialsViewModel(
     }
 }
 
+/**
+ * @param suppressKeyboardOnShow If the stage is completed in the onboarding process
+ * @param isThisStageFinished If the init process has completed successfully
+ */
 data class Stundenplan24CredentialsState(
     val sp24Id: Int? = null,
     val username: String = "schueler",
@@ -100,6 +107,7 @@ data class Stundenplan24CredentialsState(
     val isPasswordVisible: Boolean = false,
     val sp24CredentialsState: Sp24CredentialsState = Sp24CredentialsState.NOT_CHECKED,
     val isThisStageFinished: Boolean = false,
+    val suppressKeyboardOnShow: Boolean = false,
     val isLoading: Boolean = false,
 ) {
     val isUsernameValid: Boolean

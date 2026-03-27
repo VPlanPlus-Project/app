@@ -128,7 +128,7 @@ private fun TeacherNoticeContent(
                     text = "Weiter",
                     size = ButtonSize.Big,
                     onClick = {
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        haptic.performHapticFeedback(HapticFeedbackType.Confirm)
                         onContinue()
                     },
                     icon = CoreUiRes.drawable.arrow_right,

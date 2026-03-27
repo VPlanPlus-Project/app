@@ -121,7 +121,7 @@ private fun SubjectInstanceSelectionContent(
                                 .clip(RoundedCornerShape(4.dp))
                                 .background(MaterialTheme.colorScheme.surfaceContainer)
                                 .clickable {
-                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
                                     onEvent(ProfileSelectionEvent.ToggleCourse(course))
                                 }
                                 .padding(end = 16.dp, start = 4.dp),
@@ -133,7 +133,7 @@ private fun SubjectInstanceSelectionContent(
                                 else if (isCoursePartiallySelected) ToggleableState.Indeterminate
                                 else ToggleableState.Off,
                                 onClick = {
-                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
                                     onEvent(ProfileSelectionEvent.ToggleCourse(course))
                                 }
                             )
@@ -187,7 +187,7 @@ private fun SubjectInstanceSelectionContent(
                                         .clip(RoundedCornerShape(4.dp))
                                         .background(MaterialTheme.colorScheme.surfaceContainer)
                                         .clickable {
-                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
                                             onEvent(ProfileSelectionEvent.ToggleSubjectInstance(subjectInstance))
                                         }
                                         .padding(end = 16.dp, start = 4.dp),
@@ -197,7 +197,7 @@ private fun SubjectInstanceSelectionContent(
                                     Checkbox(
                                         checked = enabled,
                                         onCheckedChange = {
-                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
                                             onEvent(ProfileSelectionEvent.ToggleSubjectInstance(subjectInstance))
                                         }
                                     )
@@ -237,7 +237,7 @@ private fun SubjectInstanceSelectionContent(
                 size = ButtonSize.Big,
                 onlyEventOnActive = true,
                 onClick = {
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    haptic.performHapticFeedback(HapticFeedbackType.Confirm)
                     onEvent(ProfileSelectionEvent.CommitProfile)
                 }
             )

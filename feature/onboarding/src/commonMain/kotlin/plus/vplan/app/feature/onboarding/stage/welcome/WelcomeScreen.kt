@@ -187,7 +187,7 @@ private fun OnboardingWelcomeScreenContent(
         ) {
             Button(
                 onClick = {
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    haptic.performHapticFeedback(HapticFeedbackType.Confirm)
                     onNext()
                 },
                 modifier = Modifier,
