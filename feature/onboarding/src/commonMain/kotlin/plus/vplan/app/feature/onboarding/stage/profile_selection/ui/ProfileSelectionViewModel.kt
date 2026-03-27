@@ -112,6 +112,12 @@ internal data class ProfileSelectionState(
     val resultingVisibleTeacherOptions = options
         .filterIsInstance<OnboardingProfile.TeacherProfile>()
         .filter { it.isTrustedName || showUntrustedProfiles }
+
+    val courses = (this.selectedProfile as? OnboardingProfile.StudentProfile)
+        ?.subjectInstances.orEmpty()
+        .mapNotNull { it.course }
+        .toSet()
+        .sortedBy { it.name }
 }
 
 internal enum class ProfileSelectionSaveState {

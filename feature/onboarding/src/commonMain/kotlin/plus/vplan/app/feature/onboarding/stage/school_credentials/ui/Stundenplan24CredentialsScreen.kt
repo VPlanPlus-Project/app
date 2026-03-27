@@ -75,8 +75,9 @@ private fun Stundenplan24CredentialsContent(
     val haptic = LocalHapticFeedback.current
     val passwordFocusRequester = remember { FocusRequester() }
     LaunchedEffect(Unit) {
-        passwordFocusRequester.requestFocus()
+        if (!state.isThisStageFinished) passwordFocusRequester.requestFocus()
     }
+
     Column(
         modifier = Modifier
             .fillMaxSize()

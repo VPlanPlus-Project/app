@@ -104,7 +104,6 @@ fun OnboardingView(
                             if (studentProfile != null) {
                                 SubjectInstanceSelectionScreen(
                                     studentProfile = studentProfile,
-                                    onBack = { viewModel.navigateBack() },
                                     onDone = { viewModel.onSubjectInstanceSelectionDone() },
                                 )
                             }
