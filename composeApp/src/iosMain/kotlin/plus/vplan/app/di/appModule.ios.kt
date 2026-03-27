@@ -32,7 +32,7 @@ actual val platformModule: Module = module {
     single<NotificationRepository> { NotificationRepositoryImpl() }
     single<AuthenticationRepository> { AuthenticationRepositoryImpl() }
     single<BiometricAuthentication> { BiometricAuthenticationImpl() }
-    single<PermissionsController>() { PermissionsController() }
+    single<dev.icerock.moko.permissions.PermissionsController> { PermissionsController() }
     single<PermissionRepository> { PermissionRepositoryImpl(get()) }
     single<PlatformRepository> { PlatformRepositoryImpl() }
     single<OpenBiometricSettings> { OpenBiometricSettingsIos() }
