@@ -7,13 +7,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -50,6 +48,7 @@ import plus.vplan.app.feature.onboarding.ui.components.OnboardingHeader
 @Composable
 internal fun ProfileSelectionScreen(
     options: List<OnboardingProfile>,
+    contentPadding: PaddingValues,
     onProfileSelected: (OnboardingProfile) -> Unit,
 ) {
     val viewModel = koinViewModel<ProfileSelectionViewModel>()
@@ -65,6 +64,7 @@ internal fun ProfileSelectionScreen(
 
     ProfileListContent(
         state = state,
+        contentPadding = contentPadding,
         onEvent = viewModel::onEvent,
     )
 }
@@ -72,6 +72,7 @@ internal fun ProfileSelectionScreen(
 @Composable
 private fun ProfileListContent(
     state: ProfileSelectionState,
+    contentPadding: PaddingValues,
     onEvent: (ProfileSelectionEvent) -> Unit,
 ) {
     val haptic = LocalHapticFeedback.current
@@ -79,7 +80,7 @@ private fun ProfileListContent(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surfaceContainerLowest)
-            .padding(WindowInsets.safeDrawing.asPaddingValues().copy(bottom = 0.dp))
+            .padding(contentPadding.copy(bottom = 0.dp))
             .padding(horizontal = 16.dp),
     ) {
         OnboardingHeader(
@@ -97,7 +98,7 @@ private fun ProfileListContent(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(bottom = 16.dp + WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding())
+                .padding(bottom = 16.dp + contentPadding.calculateBottomPadding())
         ) {
             AnimatedVisibility(
                 visible = state.hasStudentProfiles && (state.filterProfileType == null || state.filterProfileType == ProfileType.STUDENT),
@@ -255,6 +256,7 @@ private fun ProfileListContentPreview() {
                     )
                 )
             ),
+            contentPadding = PaddingValues(),
             onEvent = {}
         )
     }

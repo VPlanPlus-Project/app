@@ -6,12 +6,10 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
@@ -36,6 +34,7 @@ import plus.vplan.app.feature.onboarding.ui.components.OnboardingHeader
 
 @Composable
 fun SchoolSearch(
+    contentPadding: PaddingValues,
     onSchoolSelected: (school: OnboardingSchoolOption) -> Unit
 ) {
     val viewModel = koinViewModel<SchoolSearchViewModel>()
@@ -45,6 +44,7 @@ fun SchoolSearch(
 
     SchoolSearchContent(
         state = state,
+        contentPadding = contentPadding,
         onEvent = viewModel::handleEvent
     )
 
@@ -57,6 +57,7 @@ fun SchoolSearch(
 @Composable
 private fun SchoolSearchContent(
     state: OnboardingSchoolSearchState,
+    contentPadding: PaddingValues,
     onEvent: (SchoolSearchEvent) -> Unit,
 ) {
     val searchBarFocusRequester = remember { FocusRequester() }
@@ -67,7 +68,7 @@ private fun SchoolSearchContent(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surfaceContainerLowest)
-            .padding(WindowInsets.safeDrawing.asPaddingValues())
+            .padding(contentPadding)
     ) {
         Column(
             modifier = Modifier.fillMaxWidth()
@@ -141,6 +142,7 @@ private fun SchoolSearchPreview() {
     AppTheme(dynamicColor = false) {
         SchoolSearchContent(
             state = OnboardingSchoolSearchState(),
+            contentPadding = PaddingValues(),
             onEvent = {}
         )
     }
@@ -155,6 +157,7 @@ private fun SchoolSearchLoadingPreview() {
                 searchQuery = "Test",
                 results = SchoolResults.Loading
             ),
+            contentPadding = PaddingValues(),
             onEvent = {}
         )
     }
@@ -169,6 +172,7 @@ private fun SchoolSearchErrorPreview() {
                 searchQuery = "Test",
                 results = SchoolResults.Error
             ),
+            contentPadding = PaddingValues(),
             onEvent = {}
         )
     }
@@ -201,6 +205,7 @@ private fun SchoolSearchResultsPreview() {
                     )
                 )
             ),
+            contentPadding = PaddingValues(),
             onEvent = {}
         )
     }
@@ -215,6 +220,7 @@ private fun SchoolSearchNoResultsPreview() {
                 searchQuery = "Test",
                 results = SchoolResults.Results(emptyList()),
             ),
+            contentPadding = PaddingValues(),
             onEvent = {}
         )
     }

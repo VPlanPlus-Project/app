@@ -2,12 +2,10 @@ package plus.vplan.app.feature.onboarding.stage.permissions.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -28,6 +26,7 @@ import plus.vplan.app.feature.onboarding.ui.components.OnboardingHeader
 
 @Composable
 internal fun PermissionsScreen(
+    contentPadding: PaddingValues,
     onDone: () -> Unit
 ) {
     val viewModel = koinViewModel<PermissionsViewModel>()
@@ -40,6 +39,7 @@ internal fun PermissionsScreen(
 
     PermissionsContent(
         state = state,
+        contentPadding = contentPadding,
         onEvent = viewModel::onEvent
     )
 }
@@ -47,6 +47,7 @@ internal fun PermissionsScreen(
 @Composable
 private fun PermissionsContent(
     state: PermissionsState,
+    contentPadding: PaddingValues,
     onEvent: (event: PermissionsEvent) -> Unit,
 ) {
     val haptic = LocalHapticFeedback.current
@@ -55,7 +56,7 @@ private fun PermissionsContent(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surfaceContainerLowest)
-            .padding(WindowInsets.safeDrawing.asPaddingValues())
+            .padding(contentPadding)
             .padding(horizontal = 16.dp)
     ) {
         OnboardingHeader(
@@ -91,6 +92,7 @@ private fun PermissionPreview() {
     AppTheme(dynamicColor = false) {
         PermissionsContent(
             state = PermissionsState(),
+            contentPadding = PaddingValues(),
             onEvent = {}
         )
     }

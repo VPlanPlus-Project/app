@@ -17,7 +17,7 @@ fun OnboardingHeader(
         .fillMaxWidth()
         .padding(horizontal = 16.dp, vertical = 24.dp),
     title: String,
-    subtitle: String
+    subtitle: String?
 ) {
     Column(modifier) {
         Text(
@@ -28,7 +28,7 @@ fun OnboardingHeader(
             modifier = Modifier
                 .fillMaxWidth()
         )
-        Text(
+        if (subtitle != null) Text(
             text = subtitle,
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.bodySmall,

@@ -2,14 +2,12 @@ package plus.vplan.app.feature.onboarding.stage.school_credentials.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -38,6 +36,7 @@ import plus.vplan.app.feature.onboarding.ui.components.OnboardingHeader
 fun Stundenplan24CredentialsScreen(
     sp24Id: Int?,
     isLoadingSchool: Boolean,
+    contentPadding: PaddingValues,
     onValidCredentialsProvided: (username: String, password: String) -> Unit,
 ) {
     val viewModel = koinViewModel<Stundenplan24CredentialsViewModel>()
@@ -57,6 +56,7 @@ fun Stundenplan24CredentialsScreen(
 
     if (state.sp24Id != null) Stundenplan24CredentialsContent(
         state = state,
+        contentPadding = contentPadding,
         onEvent = viewModel::handleEvent
     )
 
@@ -70,6 +70,7 @@ fun Stundenplan24CredentialsScreen(
 @Composable
 private fun Stundenplan24CredentialsContent(
     state: Stundenplan24CredentialsState,
+    contentPadding: PaddingValues,
     onEvent: (Stundenplan24CredentialsEvent) -> Unit
 ) {
     val haptic = LocalHapticFeedback.current
@@ -82,7 +83,7 @@ private fun Stundenplan24CredentialsContent(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surfaceContainerLowest)
-            .padding(WindowInsets.safeDrawing.asPaddingValues())
+            .padding(contentPadding)
             .padding(horizontal = 16.dp)
     ) {
         OnboardingHeader(
@@ -144,6 +145,7 @@ private fun Stundenplan24CredentialsPreview() {
                 username = "schueler",
                 password = "password"
             ),
+            contentPadding = PaddingValues(),
             onEvent = {}
         )
     }

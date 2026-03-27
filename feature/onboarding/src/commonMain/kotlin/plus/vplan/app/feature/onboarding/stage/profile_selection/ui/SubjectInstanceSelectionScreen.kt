@@ -4,14 +4,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -50,6 +48,7 @@ import kotlin.uuid.Uuid
 @Composable
 internal fun SubjectInstanceSelectionScreen(
     studentProfile: OnboardingProfile.StudentProfile,
+    contentPadding: PaddingValues,
     onDone: () -> Unit,
 ) {
     val viewModel = koinViewModel<ProfileSelectionViewModel>()
@@ -63,6 +62,7 @@ internal fun SubjectInstanceSelectionScreen(
 
     SubjectInstanceSelectionContent(
         state = state,
+        contentPadding = contentPadding,
         onEvent = viewModel::onEvent,
     )
 }
@@ -70,6 +70,7 @@ internal fun SubjectInstanceSelectionScreen(
 @Composable
 private fun SubjectInstanceSelectionContent(
     state: ProfileSelectionState,
+    contentPadding: PaddingValues,
     onEvent: (ProfileSelectionEvent) -> Unit,
 ) {
     val haptic = LocalHapticFeedback.current
@@ -77,7 +78,7 @@ private fun SubjectInstanceSelectionContent(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surfaceContainerLowest)
-            .padding(WindowInsets.safeDrawing.asPaddingValues().copy(bottom = 0.dp))
+            .padding(contentPadding.copy(bottom = 0.dp))
             .padding(horizontal = 16.dp),
     ) {
         OnboardingHeader(
@@ -89,7 +90,7 @@ private fun SubjectInstanceSelectionContent(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(bottom = 16.dp + WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding())
+                .padding(bottom = 16.dp + contentPadding.calculateBottomPadding())
         ) {
             if (state.courses.isNotEmpty()) Column(
                 verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -291,6 +292,7 @@ private fun SubjectInstanceSelectionPreview() {
                     subjectInstance2 to false
                 )
             ),
+            contentPadding = PaddingValues(),
             onEvent = {}
         )
     }
