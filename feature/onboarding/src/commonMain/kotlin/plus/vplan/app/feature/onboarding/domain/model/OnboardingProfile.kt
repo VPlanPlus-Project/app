@@ -9,9 +9,17 @@ sealed interface OnboardingProfile {
     val type: ProfileType
     val alias: Alias
 
+    /**
+     * Since SP24.kt returns _everything_ there may be some items that aren't actual options.
+     * These will be hidden by default to remove clutter and only be shown if the user explicitly
+     * requests so.
+     */
+    val isTrustedName: Boolean
+
     data class StudentProfile(
         override val name: String,
         override val alias: Alias,
+        override val isTrustedName: Boolean,
         val subjectInstances: List<SubjectInstance>
     ) : OnboardingProfile {
         override val type: ProfileType = ProfileType.STUDENT
@@ -20,6 +28,7 @@ sealed interface OnboardingProfile {
     data class TeacherProfile(
         override val name: String,
         override val alias: Alias,
+        override val isTrustedName: Boolean,
     ) : OnboardingProfile {
         override val type: ProfileType = ProfileType.TEACHER
     }

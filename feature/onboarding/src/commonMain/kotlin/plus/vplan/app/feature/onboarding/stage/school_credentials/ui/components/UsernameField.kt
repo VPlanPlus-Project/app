@@ -12,8 +12,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -22,7 +22,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.TextRange
@@ -39,7 +38,6 @@ fun UsernameField(
     areCredentialsInvalid: Boolean,
     onUsernameChanged: (String) -> Unit,
     onFocusPassword: () -> Unit,
-    hideBottomLine: Boolean,
     shape: Shape = TextFieldDefaults.shape
 ) {
     var textFieldValueState by remember {
@@ -52,18 +50,11 @@ fun UsernameField(
         if (username == textFieldValueState.text) return@LaunchedEffect
         textFieldValueState = textFieldValueState.copy(text = username)
     }
-    TextField(
+    OutlinedTextField(
         value = textFieldValueState,
         onValueChange = { textFieldValueState = it },
         label = { Text("Nutzername") },
-        modifier = Modifier
-            .fillMaxWidth(),
-        colors = if (hideBottomLine) TextFieldDefaults.colors(
-            focusedIndicatorColor = Color.Transparent,
-            unfocusedIndicatorColor = Color.Transparent,
-            disabledIndicatorColor = Color.Transparent,
-            errorIndicatorColor = Color.Transparent,
-        ) else TextFieldDefaults.colors(),
+        modifier = Modifier.fillMaxWidth(),
         shape = shape,
         singleLine = true,
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),

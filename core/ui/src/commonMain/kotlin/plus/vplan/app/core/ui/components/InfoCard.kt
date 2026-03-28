@@ -1,4 +1,4 @@
-package plus.vplan.app.ui.components
+package plus.vplan.app.core.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.ui.modifier.thenIf
-import plus.vplan.app.utils.toBlackAndWhite
+import plus.vplan.app.core.ui.util.color.toBlackAndWhite
 
 @Composable
 fun InfoCard(
@@ -41,7 +41,7 @@ fun InfoCard(
 ) {
     Column(
         modifier = modifier
-            .thenIf(Modifier.shadow(2.dp, shape = RoundedCornerShape(16.dp))) { shadow }
+            .thenIf(Modifier.shadow(2.dp, shape = RoundedCornerShape(16.dp), spotColor = backgroundColor)) { shadow }
             .clip(RoundedCornerShape(16.dp))
             .background(backgroundColor)
             .padding(start = 4.dp)

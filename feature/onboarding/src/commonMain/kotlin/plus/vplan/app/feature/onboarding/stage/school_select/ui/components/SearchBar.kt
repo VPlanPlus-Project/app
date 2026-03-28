@@ -1,26 +1,27 @@
 package plus.vplan.app.feature.onboarding.stage.school_select.ui.components
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -34,6 +35,7 @@ fun SearchBar(
     modifier: Modifier = Modifier,
     query: String,
     textFieldError: SchoolSearchTextFieldError?,
+    searchBarFocusRequester: FocusRequester,
     onEvent: (SchoolSearchEvent) -> Unit
 ) {
     Row(
@@ -41,27 +43,23 @@ fun SearchBar(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.Top
     ) {
-        Column(
-            modifier = Modifier.weight(1f)
-        ) {
-            TextField(
+        Column {
+            OutlinedTextField(
                 value = query,
                 onValueChange = { onEvent(SchoolSearchEvent.OnQueryChanged(it)) },
                 label = { Text(
-                    text = "Schule oder Stundenplan24.de-Schulnummer",
+                    text = "Nach Schule suchen",
                     maxLines = 1,
-                    modifier = Modifier.basicMarquee(
-                        iterations = Int.MAX_VALUE
-                    )
+                    modifier = Modifier
+                        .basicMarquee(iterations = Int.MAX_VALUE)
+                        .background(MaterialTheme.colorScheme.surfaceContainerLowest)
                 ) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp),
+                    .focusRequester(searchBarFocusRequester),
                 colors = TextFieldDefaults.colors(
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    disabledIndicatorColor = Color.Transparent,
-                    errorIndicatorColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    focusedContainerColor = Color.Transparent,
                 ),
                 shape = RoundedCornerShape(8.dp),
                 leadingIcon = {
@@ -94,17 +92,6 @@ fun SearchBar(
                     maxLines = 1
                 )
             }
-        }
-        FilledIconButton(
-            onClick = { onEvent(SchoolSearchEvent.OnUseSp24SchoolClicked) },
-            modifier = Modifier.size(56.dp),
-            shape = RoundedCornerShape(8.dp)
-        ) {
-            Icon(
-                painter = painterResource(CoreUiRes.drawable.arrow_right),
-                contentDescription = null,
-                modifier = Modifier.size(24.dp)
-            )
         }
     }
 }

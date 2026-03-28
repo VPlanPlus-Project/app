@@ -11,6 +11,7 @@ import androidx.fragment.app.FragmentActivity
 import co.touchlab.kermit.Logger
 import com.google.firebase.Firebase
 import com.google.firebase.crashlytics.crashlytics
+import dev.icerock.moko.permissions.PermissionsController
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.manualFileKitCoreInitialization
 import io.ktor.http.URLBuilder
@@ -23,6 +24,7 @@ class MainActivity : FragmentActivity() {
     private var canStart by mutableStateOf(true)
 
     private val analyticsRepository: AnalyticsRepository by inject()
+    private val permissionsController by inject<PermissionsController>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,6 +55,8 @@ class MainActivity : FragmentActivity() {
                 this.runOnUiThread { this.finish() }
             }.start()
         }
+
+        permissionsController.bind(this)
     }
 
     override fun onNewIntent(intent: Intent) {

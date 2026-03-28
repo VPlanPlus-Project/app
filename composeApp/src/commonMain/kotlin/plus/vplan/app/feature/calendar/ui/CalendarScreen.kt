@@ -116,7 +116,7 @@ import plus.vplan.app.feature.calendar.ui.components.date_selector.weekHeightDef
 import plus.vplan.app.feature.home.ui.components.FollowingLessons
 import plus.vplan.app.feature.homework.ui.components.NewHomeworkDrawer
 import plus.vplan.app.feature.homework.ui.components.detail.HomeworkDetailDrawer
-import plus.vplan.app.ui.components.InfoCard
+import plus.vplan.app.core.ui.components.InfoCard
 import plus.vplan.app.ui.components.MultiFab
 import plus.vplan.app.ui.components.MultiFabItem
 import plus.vplan.app.utils.shortDayOfWeekNames
