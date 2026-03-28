@@ -37,6 +37,7 @@ import kotlinx.datetime.format
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.model.AppEntity
 import plus.vplan.app.core.model.Profile
+import plus.vplan.app.core.model.toName
 import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.core.ui.components.Grid
 import plus.vplan.app.core.ui.components.SubjectIcon
@@ -47,7 +48,6 @@ import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.core.utils.date.regularDateFormatWithoutYear
 import plus.vplan.app.core.utils.date.untilRelativeText
 import plus.vplan.app.feature.search.ui.main.NewItem
-import plus.vplan.app.utils.toName
 
 @Composable
 private fun sectionTitleFont() = MaterialTheme.typography.titleMedium.copy(fontFamily = displayFontFamily())

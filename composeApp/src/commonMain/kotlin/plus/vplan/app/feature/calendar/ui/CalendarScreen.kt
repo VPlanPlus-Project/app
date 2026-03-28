@@ -105,18 +105,19 @@ import plus.vplan.app.core.utils.date.untilText
 import plus.vplan.app.feature.assessment.ui.components.create.NewAssessmentDrawer
 import plus.vplan.app.feature.assessment.ui.components.detail.AssessmentDetailDrawer
 import plus.vplan.app.feature.calendar.ui.components.DisplaySelectType
-import plus.vplan.app.feature.calendar.ui.components.agenda.AgendaHead
-import plus.vplan.app.feature.calendar.ui.components.agenda.AssessmentCard
-import plus.vplan.app.feature.calendar.ui.components.agenda.HomeworkCard
-import plus.vplan.app.feature.calendar.ui.components.calendar.CalendarView
-import plus.vplan.app.feature.calendar.ui.components.calendar.CalendarViewLessons
 import plus.vplan.app.feature.calendar.ui.components.date_selector.DateSelectionCause
 import plus.vplan.app.feature.calendar.ui.components.date_selector.ScrollableDateSelector
 import plus.vplan.app.feature.calendar.ui.components.date_selector.weekHeightDefault
-import plus.vplan.app.feature.home.ui.components.FollowingLessons
+import plus.vplan.app.feature.calendar.view.domain.model.LessonRendering
+import plus.vplan.app.feature.calendar.view.ui.CalendarView
+import plus.vplan.app.feature.calendar.view.ui.CalendarViewLessons
+import plus.vplan.app.feature.calendar.view.ui.components.AgendaHead
+import plus.vplan.app.feature.calendar.view.ui.components.AssessmentCard
+import plus.vplan.app.feature.calendar.view.ui.components.FollowingLessons
+import plus.vplan.app.feature.calendar.view.ui.components.HomeworkCard
+import plus.vplan.app.feature.calendar.view.ui.components.InfoCard
 import plus.vplan.app.feature.homework.ui.components.NewHomeworkDrawer
 import plus.vplan.app.feature.homework.ui.components.detail.HomeworkDetailDrawer
-import plus.vplan.app.ui.components.InfoCard
 import plus.vplan.app.ui.components.MultiFab
 import plus.vplan.app.ui.components.MultiFabItem
 import plus.vplan.app.utils.shortDayOfWeekNames
@@ -419,7 +420,9 @@ private fun CalendarScreenContent(
                                 val date = remember(page) { LocalDate.now().plus((page - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY) }
                                 val contentScrollState = remember(date) { contentScrollStates.getOrPut(date) { ScrollState(0) } }
                                 val day = state.calendarDays[date] ?: CalendarDay(date)
-                                val lessonsForCalendarView = CalendarViewLessons(day.lessons ?: LessonRendering.ListView(emptyMap()))
+                                val lessonsForCalendarView = CalendarViewLessons(
+                                    day.lessons ?: LessonRendering.ListView(emptyMap())
+                                )
                                 CalendarView(
                                     profile = state.currentProfile,
                                     date = date,

@@ -48,6 +48,7 @@ import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.core.ui.components.Button
 import plus.vplan.app.core.ui.components.ButtonSize
 import plus.vplan.app.core.ui.components.ButtonState
+import plus.vplan.app.feature.calendar.view.ui.components.InfoCard
 import plus.vplan.app.feature.homework.ui.components.create.FileButtons
 import plus.vplan.app.feature.homework.ui.components.create.FileItem
 import plus.vplan.app.feature.homework.ui.components.create.LessonSelectDrawer
@@ -59,7 +60,6 @@ import plus.vplan.app.ui.common.AttachedFile
 import plus.vplan.app.ui.components.DateSelectConfiguration
 import plus.vplan.app.ui.components.DateSelectDrawer
 import plus.vplan.app.ui.components.FullscreenDrawerContext
-import plus.vplan.app.ui.components.InfoCard
 
 
 @Composable

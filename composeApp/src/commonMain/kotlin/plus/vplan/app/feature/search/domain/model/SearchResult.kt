@@ -1,7 +1,7 @@
 package plus.vplan.app.feature.search.domain.model
 
 import plus.vplan.app.core.model.besteschule.BesteSchuleGrade
-import plus.vplan.app.feature.calendar.ui.LessonLayoutingInfo
+import plus.vplan.app.feature.calendar.view.domain.model.LessonLayoutingInfo
 import kotlin.uuid.Uuid
 
 sealed class SearchResult(val type: Type) {

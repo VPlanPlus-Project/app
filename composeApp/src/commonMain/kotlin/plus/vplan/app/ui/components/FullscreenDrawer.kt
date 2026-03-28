@@ -48,11 +48,11 @@ import androidx.compose.ui.unit.times
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.launch
 import plus.vplan.app.core.ui.modifier.thenIf
+import plus.vplan.app.core.utils.ui.color.transparent
 import plus.vplan.app.utils.abs
 import plus.vplan.app.utils.ifNan
 import plus.vplan.app.utils.roundToNearest
 import plus.vplan.app.utils.sech
-import plus.vplan.app.utils.transparent
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.sin

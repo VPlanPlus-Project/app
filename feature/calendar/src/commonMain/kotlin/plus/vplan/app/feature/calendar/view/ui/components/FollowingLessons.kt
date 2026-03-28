@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.home.ui.components
+package plus.vplan.app.feature.calendar.view.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.core.model.Lesson
-import plus.vplan.app.utils.transparent
+import plus.vplan.app.core.utils.ui.color.transparent
 
 @Composable
 fun FollowingLessons(

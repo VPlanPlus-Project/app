@@ -96,10 +96,13 @@ import plus.vplan.app.core.ui.theme.getGroup
 import plus.vplan.app.core.ui.util.textunit.toDp
 import plus.vplan.app.core.utils.date.longMonthNames
 import plus.vplan.app.core.utils.date.regularDateFormatWithoutYear
+import plus.vplan.app.core.utils.date.regularTimeFormat
 import plus.vplan.app.core.utils.date.untilRelativeText
 import plus.vplan.app.core.utils.string.DOT
+import plus.vplan.app.core.utils.ui.color.transparent
 import plus.vplan.app.core.utils.ui.plus
 import plus.vplan.app.feature.assessment.ui.components.create.NewAssessmentDrawer
+import plus.vplan.app.feature.calendar.view.ui.components.InfoCard
 import plus.vplan.app.feature.home.ui.components.DayInfoCard
 import plus.vplan.app.feature.home.ui.components.FeedTitle
 import plus.vplan.app.feature.home.ui.components.Greeting
@@ -110,12 +113,9 @@ import plus.vplan.app.feature.main.ui.MainScreen
 import plus.vplan.app.feature.news.ui.NewsDrawer
 import plus.vplan.app.feature.schulverwalter.domain.usecase.InitializeSchulverwalterReauthUseCase
 import plus.vplan.app.feature.settings.page.info.ui.components.FeedbackDrawer
-import plus.vplan.app.ui.components.InfoCard
 import plus.vplan.app.utils.longDayOfWeekNames
 import plus.vplan.app.utils.openUrl
 import plus.vplan.app.utils.progressIn
-import plus.vplan.app.utils.regularTimeFormat
-import plus.vplan.app.utils.transparent
 
 private val LESSON_NUMBER_TOP_PADDING = 16.dp
 private val LESSON_NUMBER_SIZE = 32.dp

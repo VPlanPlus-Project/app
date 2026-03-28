@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.calendar.ui.components.agenda
+package plus.vplan.app.feature.calendar.view.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -31,12 +31,12 @@ import androidx.compose.ui.unit.dp
 import kotlinx.datetime.format
 import plus.vplan.app.core.model.AppEntity
 import plus.vplan.app.core.model.Assessment
+import plus.vplan.app.core.model.toName
 import plus.vplan.app.core.ui.components.SubjectIcon
 import plus.vplan.app.core.ui.subjectColor
 import plus.vplan.app.core.ui.theme.getGroup
 import plus.vplan.app.core.ui.util.textunit.toDp
 import plus.vplan.app.core.utils.date.regularDateFormat
-import plus.vplan.app.utils.toName
 
 @Composable
 fun AssessmentCard(

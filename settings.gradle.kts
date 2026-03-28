@@ -58,5 +58,6 @@ include(":core:sync")
 include(":core:analytics")
 
 // Feature modules
+include(":feature:calendar")
 include(":feature:onboarding")
 include(":feature:grades")

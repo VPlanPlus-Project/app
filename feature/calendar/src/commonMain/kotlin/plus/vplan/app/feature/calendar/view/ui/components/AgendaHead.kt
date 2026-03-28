@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.calendar.ui.components.agenda
+package plus.vplan.app.feature.calendar.view.ui.components
 
 import androidx.compose.animation.core.InfiniteTransition
 import androidx.compose.animation.core.animateFloatAsState
@@ -36,8 +36,8 @@ import plus.vplan.app.core.ui.components.ShimmerLoader
 import plus.vplan.app.core.ui.modifier.thenIf
 import plus.vplan.app.core.ui.util.textunit.toDp
 import plus.vplan.app.core.utils.date.now
-import plus.vplan.app.ui.grayScale
-import plus.vplan.app.utils.regularTimeFormat
+import plus.vplan.app.core.utils.date.regularTimeFormat
+import plus.vplan.app.core.utils.ui.modifier.grayScale
 
 
 @Composable
@@ -55,7 +55,7 @@ fun AgendaHead(
         modifier = Modifier
             .fillMaxWidth()
             .height(48.dp)
-            .thenIf(Modifier.grayScale()) { date < LocalDate.now() },
+            .thenIf(Modifier.Companion.grayScale()) { date < LocalDate.now() },
         verticalArrangement = Arrangement.Center
     ) {
         CompositionLocalProvider(LocalContentColor provides if (date < LocalDate.now()) MaterialTheme.colorScheme.outline else MaterialTheme.colorScheme.onSurface) {

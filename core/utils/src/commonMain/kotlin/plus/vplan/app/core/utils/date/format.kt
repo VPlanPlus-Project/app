@@ -2,6 +2,7 @@ package plus.vplan.app.core.utils.date
 
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalTime
 import kotlinx.datetime.format.Padding
 import kotlinx.datetime.format.char
 
@@ -32,6 +33,12 @@ val regularDateTimeFormat = LocalDateTime.Format {
     char('.')
     monthNumber(Padding.ZERO)
     chars(", ")
+    hour(Padding.ZERO)
+    char(':')
+    minute(Padding.ZERO)
+}
+
+val regularTimeFormat = LocalTime.Format {
     hour(Padding.ZERO)
     char(':')
     minute(Padding.ZERO)

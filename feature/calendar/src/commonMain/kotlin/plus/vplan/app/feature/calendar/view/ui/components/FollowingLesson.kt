@@ -1,6 +1,4 @@
-@file:OptIn(ExperimentalTime::class)
-
-package plus.vplan.app.feature.home.ui.components
+package plus.vplan.app.feature.calendar.view.ui.components
 
 
 import androidx.compose.foundation.layout.Arrangement
@@ -32,7 +30,6 @@ import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.core.ui.components.SubjectIcon
 import plus.vplan.app.core.ui.util.textunit.toDp
 import plus.vplan.app.core.utils.string.DOT
-import kotlin.time.ExperimentalTime
 
 private fun LocalDateTime.format(): String {
     return toInstant(TimeZone.of("Europe/Berlin")).toLocalDateTime(TimeZone.currentSystemDefault()).format(

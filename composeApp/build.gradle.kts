@@ -59,6 +59,7 @@ kotlin {
 //            export(project(":core:common"))
 
 
+            export(project(":feature:calendar"))
             export(project(":feature:onboarding"))
             export(project(":feature:grades"))
 
@@ -117,6 +118,7 @@ kotlin {
             implementation(project(":core:common"))
 
 
+            implementation(project(":feature:calendar"))
             implementation(project(":feature:onboarding"))
             implementation(project(":feature:grades"))
 

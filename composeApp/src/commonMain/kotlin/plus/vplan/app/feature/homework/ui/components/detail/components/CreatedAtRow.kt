@@ -9,7 +9,7 @@ import plus.vplan.app.core.ui.components.MetadataRow
 import plus.vplan.app.core.ui.components.tableNameStyle
 import plus.vplan.app.core.ui.components.tableValueStyle
 import plus.vplan.app.core.utils.date.regularDateFormat
-import plus.vplan.app.utils.regularTimeFormat
+import plus.vplan.app.core.utils.date.regularTimeFormat
 import kotlin.time.Instant
 
 @Composable

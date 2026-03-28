@@ -1,5 +1,4 @@
-package plus.vplan.app.feature.calendar.ui.components.calendar
-
+package plus.vplan.app.feature.calendar.view.ui
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateContentSize
@@ -69,22 +68,21 @@ import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.core.ui.components.SubjectIcon
 import plus.vplan.app.core.ui.util.textunit.toDp
+import plus.vplan.app.core.utils.date.inWholeMinutes
+import plus.vplan.app.core.utils.date.minusWithCapAtMidnight
 import plus.vplan.app.core.utils.date.now
+import plus.vplan.app.core.utils.date.plusWithCapAtMidnight
+import plus.vplan.app.core.utils.date.regularTimeFormat
 import plus.vplan.app.core.utils.date.until
 import plus.vplan.app.core.utils.string.DOT
-import plus.vplan.app.feature.calendar.ui.LessonLayoutingInfo
-import plus.vplan.app.feature.calendar.ui.LessonRendering
-import plus.vplan.app.feature.calendar.ui.components.agenda.AssessmentCard
-import plus.vplan.app.feature.calendar.ui.components.agenda.HomeworkCard
-import plus.vplan.app.feature.home.ui.components.FollowingLessons
-import plus.vplan.app.feature.home.ui.components.HolidayScreen
-import plus.vplan.app.feature.home.ui.components.headerFont
-import plus.vplan.app.ui.components.InfoCard
-import plus.vplan.app.utils.inWholeMinutes
-import plus.vplan.app.utils.minusWithCapAtMidnight
-import plus.vplan.app.utils.plusWithCapAtMidnight
-import plus.vplan.app.utils.regularTimeFormat
-import plus.vplan.app.utils.transparent
+import plus.vplan.app.core.utils.ui.color.transparent
+import plus.vplan.app.feature.calendar.view.domain.model.LessonLayoutingInfo
+import plus.vplan.app.feature.calendar.view.domain.model.LessonRendering
+import plus.vplan.app.feature.calendar.view.ui.components.AssessmentCard
+import plus.vplan.app.feature.calendar.view.ui.components.FollowingLessons
+import plus.vplan.app.feature.calendar.view.ui.components.HolidayScreen
+import plus.vplan.app.feature.calendar.view.ui.components.HomeworkCard
+import plus.vplan.app.feature.calendar.view.ui.components.InfoCard
 import kotlin.time.Duration.Companion.minutes
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -208,13 +206,13 @@ fun CalendarView(
                                                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                                                         ) {
                                                             if (lesson.lesson is Lesson.SubstitutionPlanLesson && lesson.lesson.isSubjectChanged) SubjectIcon(
-                                                                modifier = Modifier.size(headerFont().lineHeight.toDp() + 4.dp),
+                                                                modifier = Modifier.size(MaterialTheme.typography.bodyMedium.lineHeight.toDp() + 4.dp),
                                                                 subject = lesson.lesson.subject,
                                                                 contentColor = MaterialTheme.colorScheme.onError,
                                                                 containerColor = MaterialTheme.colorScheme.error
                                                             )
                                                             else SubjectIcon(
-                                                                modifier = Modifier.size(headerFont().lineHeight.toDp() + 4.dp),
+                                                                modifier = Modifier.size(MaterialTheme.typography.bodyMedium.lineHeight.toDp() + 4.dp),
                                                                 subject = lesson.lesson.subject
                                                             )
                                                             Column {

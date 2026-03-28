@@ -1,4 +1,4 @@
-package plus.vplan.app.ui.components
+package plus.vplan.app.feature.calendar.view.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.ui.modifier.thenIf
-import plus.vplan.app.utils.toBlackAndWhite
+import plus.vplan.app.core.utils.ui.color.toBlackAndWhite
 
 @Composable
 fun InfoCard(

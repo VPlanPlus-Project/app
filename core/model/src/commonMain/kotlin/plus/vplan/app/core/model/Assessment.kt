@@ -31,3 +31,11 @@ data class Assessment(
         override val tags: Set<DataTag> = emptySet()
     }
 }
+
+fun Assessment.Type.toName() = when (this) {
+    Assessment.Type.ORAL -> "Mündlich"
+    Assessment.Type.PROJECT -> "Projekt"
+    Assessment.Type.CLASS_TEST -> "Klassenarbeit/Klausur"
+    Assessment.Type.SHORT_TEST -> "Leistungskontrolle"
+    Assessment.Type.OTHER -> "Sonstiges"
+}

@@ -38,11 +38,12 @@ import plus.vplan.app.core.ui.util.textunit.toDp
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.core.utils.date.regularDateFormat
 import plus.vplan.app.core.utils.date.untilRelativeText
-import plus.vplan.app.feature.calendar.ui.LessonLayoutingInfo
-import plus.vplan.app.feature.calendar.ui.components.agenda.AssessmentCard
-import plus.vplan.app.feature.calendar.ui.components.agenda.GradeCard
-import plus.vplan.app.feature.calendar.ui.components.calendar.CalendarView
-import plus.vplan.app.feature.calendar.ui.components.calendar.CalendarViewLessons
+import plus.vplan.app.feature.calendar.view.domain.model.LessonLayoutingInfo
+import plus.vplan.app.feature.calendar.view.ui.CalendarView
+import plus.vplan.app.feature.calendar.view.ui.CalendarViewLessons
+import plus.vplan.app.feature.calendar.view.ui.components.AssessmentCard
+import plus.vplan.app.feature.calendar.view.ui.components.GradeCard
+import plus.vplan.app.feature.calendar.view.ui.components.HomeworkCard
 import plus.vplan.app.feature.search.domain.model.SearchResult
 import plus.vplan.app.feature.search.ui.main.components.result.SchoolEntityResults
 import plus.vplan.app.utils.safeBottomPadding
@@ -154,7 +155,7 @@ fun SearchResults(
                                 .fillMaxWidth()
                         ) {
                             results.filterIsInstance<SearchResult.Homework>().forEach { result ->
-                                plus.vplan.app.feature.calendar.ui.components.agenda.HomeworkCard(
+                                HomeworkCard(
                                     homework = result.homework,
                                     profile = profile,
                                     onClick = { onHomeworkClicked(result.homework.id) }

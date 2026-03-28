@@ -33,6 +33,7 @@ import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Week
 import plus.vplan.app.core.utils.date.atStartOfWeek
+import plus.vplan.app.core.utils.date.inWholeMinutes
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.core.utils.date.plus
 import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase
@@ -42,9 +43,9 @@ import plus.vplan.app.feature.calendar.domain.usecase.GetFirstLessonStartUseCase
 import plus.vplan.app.feature.calendar.domain.usecase.GetHolidaysUseCase
 import plus.vplan.app.feature.calendar.domain.usecase.GetLastDisplayTypeUseCase
 import plus.vplan.app.feature.calendar.domain.usecase.SetLastDisplayTypeUseCase
+import plus.vplan.app.feature.calendar.view.domain.model.LessonLayoutingInfo
+import plus.vplan.app.feature.calendar.view.domain.model.LessonRendering
 import plus.vplan.app.utils.atStartOfMonth
-import plus.vplan.app.utils.inWholeMinutes
-import kotlin.comparisons.nullsLast
 import kotlin.time.Duration.Companion.days
 
 class CalendarViewModel(
@@ -324,25 +325,8 @@ suspend fun Collection<Lesson>.calculateLayouting(): List<LessonLayoutingInfo> {
     }
 }
 
-data class LessonLayoutingInfo(
-    val lesson: Lesson,
-    val sideShift: Int,
-    val of: Int
-)
-
 enum class DisplayType {
     Agenda, Calendar
-}
-
-sealed class LessonRendering {
-    data class ListView(val lessons: Map<Int, List<Lesson>>) : LessonRendering()
-    data class Layouted(val lessons: List<LessonLayoutingInfo>) : LessonRendering()
-
-    val size: Int
-        get() = when (this) {
-            is ListView -> lessons.size
-            is Layouted -> lessons.size
-        }
 }
 
 sealed class LessonLayoutingException(message: String) : Exception(message)

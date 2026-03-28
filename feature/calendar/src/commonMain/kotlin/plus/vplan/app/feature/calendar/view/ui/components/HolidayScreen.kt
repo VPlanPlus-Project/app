@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.home.ui.components
+package plus.vplan.app.feature.calendar.view.ui.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format
@@ -24,6 +25,7 @@ import kotlinx.datetime.format.Padding
 import kotlinx.datetime.format.char
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.ui.CoreUiRes
+import plus.vplan.app.core.ui.theme.AppTheme
 
 
 
@@ -76,5 +78,16 @@ fun HolidayScreen(
                 )
             }
         }
+    }
+}
+
+@Preview
+@Composable
+private fun HolidayPreview() {
+    AppTheme(dynamicColor = false) {
+        HolidayScreen(
+            isWeekend = false,
+            nextRegularSchoolDay = LocalDate(2023, 12, 25)
+        )
     }
 }

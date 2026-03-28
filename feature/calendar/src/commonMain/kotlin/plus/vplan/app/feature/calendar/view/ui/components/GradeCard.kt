@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.calendar.ui.components.agenda
+package plus.vplan.app.feature.calendar.view.ui.components
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
