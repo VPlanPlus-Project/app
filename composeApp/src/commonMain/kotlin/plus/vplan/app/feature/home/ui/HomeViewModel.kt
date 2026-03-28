@@ -34,9 +34,12 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.atDate
 import kotlinx.datetime.atTime
 import kotlinx.datetime.format
+import plus.vplan.app.core.common.usecase.GetCurrentDateTimeUseCase
 import plus.vplan.app.core.common.usecase.GetCurrentProfileUseCase
+import plus.vplan.app.core.common.usecase.GetDayUseCase
 import plus.vplan.app.core.data.KeyValueRepository
 import plus.vplan.app.core.data.Keys
+import plus.vplan.app.core.data.populator.PopulatedDay
 import plus.vplan.app.core.data.stundenplan24.Stundenplan24Repository
 import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.core.model.News
@@ -50,9 +53,6 @@ import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.core.utils.date.plus
 import plus.vplan.app.core.utils.date.regularDateFormatWithoutYear
 import plus.vplan.app.core.utils.date.untilRelativeText
-import plus.vplan.app.domain.model.populated.PopulatedDay
-import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase
-import plus.vplan.app.domain.usecase.GetDayUseCase
 import plus.vplan.app.feature.home.domain.usecase.GetNewsUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateHolidaysUseCase
 import plus.vplan.app.utils.sortedBySuspending

@@ -40,10 +40,10 @@ import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.core.utils.date.atStartOfDay
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.core.utils.date.plus
+import plus.vplan.app.core.utils.date.shortDayOfWeekNames
 import plus.vplan.app.core.utils.date.shortMonthNames
 import plus.vplan.app.core.utils.date.untilRelativeText
 import plus.vplan.app.utils.safeBottomPadding
-import plus.vplan.app.utils.shortDayOfWeekNames
 import kotlin.time.Duration.Companion.days
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant

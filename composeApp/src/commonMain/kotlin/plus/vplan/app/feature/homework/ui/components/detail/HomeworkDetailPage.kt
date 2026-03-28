@@ -39,6 +39,11 @@ import io.github.vinceglb.filekit.path
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.painterResource
+import plus.vplan.app.core.common.ui.components.CreatedAtRow
+import plus.vplan.app.core.common.ui.components.CreatedByRow
+import plus.vplan.app.core.common.ui.components.DueToRow
+import plus.vplan.app.core.common.ui.components.SavedLocalRow
+import plus.vplan.app.core.common.ui.components.ShareStatusRow
 import plus.vplan.app.core.data.file.FileOperationProgress
 import plus.vplan.app.core.model.AppEntity
 import plus.vplan.app.core.model.Homework
@@ -54,12 +59,7 @@ import plus.vplan.app.core.ui.components.SubjectGroupRow
 import plus.vplan.app.core.ui.components.tableNameStyle
 import plus.vplan.app.core.ui.components.tableValueStyle
 import plus.vplan.app.feature.homework.ui.components.create.LessonSelectDrawer
-import plus.vplan.app.feature.homework.ui.components.detail.components.CreatedAtRow
-import plus.vplan.app.feature.homework.ui.components.detail.components.CreatedByRow
-import plus.vplan.app.feature.homework.ui.components.detail.components.DueToRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.NewTaskRow
-import plus.vplan.app.feature.homework.ui.components.detail.components.SavedLocalRow
-import plus.vplan.app.feature.homework.ui.components.detail.components.ShareStatusRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.StatusRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.TaskRow
 import plus.vplan.app.ui.common.AttachedFile

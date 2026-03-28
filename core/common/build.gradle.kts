@@ -1,6 +1,5 @@
 plugins {
-    alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.vplanplus.kmp.library)
+    alias(libs.plugins.vplanplus.kmp.compose.library)
     alias(libs.plugins.serialization)
 }
 
@@ -17,6 +16,7 @@ kotlin {
             implementation(project(":core:data"))
             implementation(project(":core:model"))
             implementation(project(":core:utils"))
+            implementation(project(":core:ui"))
         }
     }
 }

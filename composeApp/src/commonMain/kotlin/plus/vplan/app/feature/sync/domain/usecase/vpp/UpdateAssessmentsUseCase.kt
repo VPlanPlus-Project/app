@@ -17,11 +17,11 @@ import plus.vplan.app.core.model.application.StartTaskJson
 import plus.vplan.app.core.model.getByProvider
 import plus.vplan.app.core.platform.NotificationRepository
 import plus.vplan.app.core.utils.date.now
+import plus.vplan.app.core.utils.date.shortDayOfWeekNames
 import plus.vplan.app.core.utils.date.shortMonthNames
 import plus.vplan.app.core.utils.date.until
 import plus.vplan.app.core.utils.date.untilRelativeText
 import plus.vplan.app.feature.profile.domain.usecase.UpdateProfileAssessmentIndexUseCase
-import plus.vplan.app.utils.shortDayOfWeekNames
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 

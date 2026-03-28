@@ -101,13 +101,19 @@ import plus.vplan.app.core.ui.theme.colors
 import plus.vplan.app.core.ui.theme.displayFontFamily
 import plus.vplan.app.core.ui.theme.getGroup
 import plus.vplan.app.core.utils.date.now
+import plus.vplan.app.core.utils.date.shortDayOfWeekNames
 import plus.vplan.app.core.utils.date.untilText
 import plus.vplan.app.feature.assessment.ui.components.create.NewAssessmentDrawer
 import plus.vplan.app.feature.assessment.ui.components.detail.AssessmentDetailDrawer
-import plus.vplan.app.feature.calendar.ui.components.DisplaySelectType
-import plus.vplan.app.feature.calendar.ui.components.date_selector.DateSelectionCause
-import plus.vplan.app.feature.calendar.ui.components.date_selector.ScrollableDateSelector
-import plus.vplan.app.feature.calendar.ui.components.date_selector.weekHeightDefault
+import plus.vplan.app.feature.calendar.page.domain.model.DateSelectionCause
+import plus.vplan.app.feature.calendar.page.domain.model.DisplayType
+import plus.vplan.app.feature.calendar.page.ui.CalendarDay
+import plus.vplan.app.feature.calendar.page.ui.CalendarEvent
+import plus.vplan.app.feature.calendar.page.ui.CalendarState
+import plus.vplan.app.feature.calendar.page.ui.CalendarViewModel
+import plus.vplan.app.feature.calendar.page.ui.components.DisplaySelectType
+import plus.vplan.app.feature.calendar.page.ui.components.date_selector.ScrollableDateSelector
+import plus.vplan.app.feature.calendar.page.ui.components.date_selector.weekHeightDefault
 import plus.vplan.app.feature.calendar.view.domain.model.LessonRendering
 import plus.vplan.app.feature.calendar.view.ui.CalendarView
 import plus.vplan.app.feature.calendar.view.ui.CalendarViewLessons
@@ -120,7 +126,6 @@ import plus.vplan.app.feature.homework.ui.components.NewHomeworkDrawer
 import plus.vplan.app.feature.homework.ui.components.detail.HomeworkDetailDrawer
 import plus.vplan.app.ui.components.MultiFab
 import plus.vplan.app.ui.components.MultiFabItem
-import plus.vplan.app.utils.shortDayOfWeekNames
 import kotlin.math.roundToInt
 
 private const val CONTENT_PAGER_SIZE = 800
@@ -492,8 +497,9 @@ private fun CalendarScreenContent(
                                                 }
                                             }
                                             if (date.dayOfWeek == DayOfWeek.MONDAY) {
-                                                if (day.week != null) Text(
-                                                    text = listOfNotNull("KW ${day.week.calendarWeek}", "SW ${day.week.weekIndex}", day.week.weekType).joinToString("\n"),
+                                                val week = day.week
+                                                if (week != null) Text(
+                                                    text = listOfNotNull("KW ${week.calendarWeek}", "SW ${week.weekIndex}", week.weekType).joinToString("\n"),
                                                     color = MaterialTheme.colorScheme.outline,
                                                     style = MaterialTheme.typography.labelSmall,
                                                     textAlign = TextAlign.Center
@@ -526,7 +532,7 @@ private fun CalendarScreenContent(
                                                         .padding(vertical = 4.dp, horizontal = 8.dp),
                                                     imageVector = CoreUiRes.drawable.info,
                                                     title = "Informationen deiner Schule",
-                                                    text = day.info,
+                                                    text = day.info!!,
                                                 )
                                             }
                                             AnimatedVisibility(

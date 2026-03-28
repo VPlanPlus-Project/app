@@ -25,7 +25,7 @@ import plus.vplan.app.core.data.substitution_plan.SubstitutionPlanRepository
 import plus.vplan.app.core.data.teacher.TeacherRepository
 import plus.vplan.app.core.model.Assessment
 import plus.vplan.app.core.utils.date.now
-import plus.vplan.app.feature.calendar.ui.calculateLayouting
+import plus.vplan.app.feature.calendar.page.ui.calculateLayouting
 import plus.vplan.app.feature.search.domain.model.SearchResult
 
 class SearchUseCase(

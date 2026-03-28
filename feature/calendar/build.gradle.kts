@@ -37,6 +37,7 @@ kotlin {
             implementation(project(":core:utils"))
             implementation(project(":core:sync"))
             implementation(project(":core:analytics"))
+            implementation(project(":core:common"))
 
             implementation(libs.vpp.sp24)
             implementation(libs.kermit)

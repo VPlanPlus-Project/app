@@ -94,6 +94,7 @@ import plus.vplan.app.core.ui.theme.colors
 import plus.vplan.app.core.ui.theme.displayFontFamily
 import plus.vplan.app.core.ui.theme.getGroup
 import plus.vplan.app.core.ui.util.textunit.toDp
+import plus.vplan.app.core.utils.date.longDayOfWeekNames
 import plus.vplan.app.core.utils.date.longMonthNames
 import plus.vplan.app.core.utils.date.regularDateFormatWithoutYear
 import plus.vplan.app.core.utils.date.regularTimeFormat
@@ -113,7 +114,6 @@ import plus.vplan.app.feature.main.ui.MainScreen
 import plus.vplan.app.feature.news.ui.NewsDrawer
 import plus.vplan.app.feature.schulverwalter.domain.usecase.InitializeSchulverwalterReauthUseCase
 import plus.vplan.app.feature.settings.page.info.ui.components.FeedbackDrawer
-import plus.vplan.app.utils.longDayOfWeekNames
 import plus.vplan.app.utils.openUrl
 import plus.vplan.app.utils.progressIn
 

@@ -17,6 +17,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import plus.vplan.app.core.common.usecase.GetCurrentDateTimeUseCase
 import plus.vplan.app.core.common.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.core.data.day.DayRepository
 import plus.vplan.app.core.model.Assessment
@@ -24,7 +25,6 @@ import plus.vplan.app.core.model.Day
 import plus.vplan.app.core.model.Homework
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.utils.date.now
-import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase
 import plus.vplan.app.feature.grades.common.domain.model.GradeLockState
 import plus.vplan.app.feature.grades.common.domain.usecase.GetGradeLockStateUseCase
 import plus.vplan.app.feature.grades.common.domain.usecase.LockGradesUseCase
@@ -129,7 +129,7 @@ class SearchViewModel(
         searchJob = viewModelScope.launch {
             state = state.copy(isLoading = true)
             searchUseCase(state.query).collectLatest {
-                state = state.copy(results = it, selectedDateType = day?.dayType, isLoading = false)
+                state = state.copy(results = it, selectedDateType = day.dayType, isLoading = false)
             }
         }
     }

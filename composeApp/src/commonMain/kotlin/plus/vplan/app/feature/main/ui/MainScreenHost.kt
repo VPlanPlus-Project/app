@@ -60,9 +60,9 @@ import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.application.network.ApiException
 import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.feature.assessment.ui.components.detail.AssessmentDetailDrawer
-import plus.vplan.app.feature.calendar.ui.CalendarEvent
+import plus.vplan.app.feature.calendar.page.ui.CalendarEvent
+import plus.vplan.app.feature.calendar.page.ui.CalendarViewModel
 import plus.vplan.app.feature.calendar.ui.CalendarScreen
-import plus.vplan.app.feature.calendar.ui.CalendarViewModel
 import plus.vplan.app.feature.grades.detail.ui.GradeDetailDrawer
 import plus.vplan.app.feature.grades.list.ui.GradesScreen
 import plus.vplan.app.feature.grades.ui.AnalyticsScreen
