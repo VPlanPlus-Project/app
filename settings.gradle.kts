@@ -59,6 +59,7 @@ include(":core:analytics")
 
 // Feature modules
 include(":feature:assessment:detail")
+include(":feature:assessment:create")
 include(":feature:assessment:core")
 include(":feature:file:core")
 include(":feature:calendar")

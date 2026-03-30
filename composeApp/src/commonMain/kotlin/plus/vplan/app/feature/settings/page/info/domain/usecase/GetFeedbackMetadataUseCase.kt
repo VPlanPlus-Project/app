@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import plus.vplan.app.AppBuildConfig
-import plus.vplan.app.core.common.usecase.GetCurrentProfileUseCase
+import plus.vplan.app.core.common.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.ProfileType
 import plus.vplan.app.core.model.getByProvider

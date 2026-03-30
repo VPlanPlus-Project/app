@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
-import plus.vplan.app.core.common.usecase.GetCurrentProfileUseCase
+import plus.vplan.app.core.common.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.core.data.timetable.TimetableRepository
 import plus.vplan.app.core.data.week.WeekRepository
 import plus.vplan.app.core.model.Timetable

@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalUuidApi::class)
-
 package plus.vplan.app
 
 import androidx.compose.foundation.layout.Column
@@ -7,26 +5,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import io.ktor.http.URLBuilder
-import io.ktor.http.appendPathSegments
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.json.Json
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.application.StartTaskJson
 import plus.vplan.app.core.ui.theme.AppTheme
 import plus.vplan.app.feature.host.ui.NavigationHost
-import plus.vplan.app.feature.settings.page.info.domain.usecase.getSystemInfo
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
-
-const val APP_ID = "4"
-const val APP_REDIRECT_URI = "vpp://app/auth/"
-fun getVppIdAuthUrl() = URLBuilder(currentConfiguration.authUrl).apply {
-    appendPathSegments("authorize")
-    parameters.append("client_id", APP_ID)
-    parameters.append("redirect_uri", APP_REDIRECT_URI)
-    parameters.append("device_name", getSystemInfo().deviceName)
-}.buildString()
 
 @Composable
 fun App(task: StartTask?) {

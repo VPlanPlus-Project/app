@@ -41,7 +41,7 @@ import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.model.Homework
 import plus.vplan.app.core.model.application.UnoptimisticTaskState
 import plus.vplan.app.core.ui.CoreUiRes
-import plus.vplan.app.ui.components.BackHandler
+import plus.vplan.app.core.ui.components.BackHandler
 import plus.vplan.app.utils.tryNoCatch
 
 

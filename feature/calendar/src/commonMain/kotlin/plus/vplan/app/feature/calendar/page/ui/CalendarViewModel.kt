@@ -23,9 +23,9 @@ import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
-import plus.vplan.app.core.common.usecase.GetCurrentDateTimeUseCase
-import plus.vplan.app.core.common.usecase.GetCurrentProfileUseCase
-import plus.vplan.app.core.common.usecase.GetDayUseCase
+import plus.vplan.app.core.common.domain.usecase.GetCurrentDateTimeUseCase
+import plus.vplan.app.core.common.domain.usecase.GetCurrentProfileUseCase
+import plus.vplan.app.core.common.domain.usecase.GetDayUseCase
 import plus.vplan.app.core.data.KeyValueRepository
 import plus.vplan.app.core.data.Keys
 import plus.vplan.app.core.model.Assessment

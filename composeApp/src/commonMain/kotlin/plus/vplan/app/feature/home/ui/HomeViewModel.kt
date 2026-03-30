@@ -34,9 +34,9 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.atDate
 import kotlinx.datetime.atTime
 import kotlinx.datetime.format
-import plus.vplan.app.core.common.usecase.GetCurrentDateTimeUseCase
-import plus.vplan.app.core.common.usecase.GetCurrentProfileUseCase
-import plus.vplan.app.core.common.usecase.GetDayUseCase
+import plus.vplan.app.core.common.domain.usecase.GetCurrentDateTimeUseCase
+import plus.vplan.app.core.common.domain.usecase.GetCurrentProfileUseCase
+import plus.vplan.app.core.common.domain.usecase.GetDayUseCase
 import plus.vplan.app.core.data.KeyValueRepository
 import plus.vplan.app.core.data.Keys
 import plus.vplan.app.core.data.populator.PopulatedDay

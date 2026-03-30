@@ -32,6 +32,7 @@ import plus.vplan.app.core.data.vpp_id.VppIdRepository
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.VppId
+import plus.vplan.app.core.ui.util.openUrl
 import plus.vplan.app.domain.usecase.SetCurrentProfileUseCase
 import plus.vplan.app.feature.grades.common.domain.usecase.LockGradesUseCase
 import plus.vplan.app.feature.main.ui.MainScreenHost
@@ -40,7 +41,6 @@ import plus.vplan.app.feature.schulverwalter.domain.usecase.InitializeSchulverwa
 import plus.vplan.app.feature.schulverwalter.domain.usecase.UpdateSchulverwalterAccessUseCase
 import plus.vplan.app.feature.sync.domain.usecase.fullsync.FullSyncUseCase
 import plus.vplan.app.feature.vpp_id.ui.VppIdSetupScreen
-import plus.vplan.app.utils.openUrl
 
 @Composable
 fun NavigationHost(task: StartTask?) {

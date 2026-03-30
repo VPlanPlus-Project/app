@@ -60,6 +60,7 @@ kotlin {
 
 
             export(project(":feature:assessment:detail"))
+            export(project(":feature:assessment:create"))
             export(project(":feature:assessment:core"))
             export(project(":feature:file:core"))
             export(project(":feature:calendar"))
@@ -78,7 +79,6 @@ kotlin {
             // AndroidX
             implementation(libs.androidx.activity.compose)
             implementation(libs.androidx.biometric)
-            implementation(libs.androidx.browser)
             implementation(libs.androidx.sqlite.framework)
             implementation(libs.androidx.work.runtime.ktx)
 
@@ -121,6 +121,7 @@ kotlin {
 
 
             implementation(project(":feature:assessment:detail"))
+            implementation(project(":feature:assessment:create"))
             implementation(project(":feature:assessment:core"))
             implementation(project(":feature:file:core"))
             implementation(project(":feature:calendar"))
@@ -179,6 +180,11 @@ kotlin {
             api(project(":core:ui"))
             api(project(":core:utils"))
 
+            api(project(":feature:assessment:detail"))
+            api(project(":feature:assessment:create"))
+            api(project(":feature:assessment:core"))
+            api(project(":feature:file:core"))
+            api(project(":feature:calendar"))
             api(project(":feature:onboarding"))
             api(project(":feature:grades"))
         }

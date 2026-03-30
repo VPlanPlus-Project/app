@@ -2,9 +2,9 @@ package plus.vplan.app.domain.di
 
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
-import plus.vplan.app.core.common.usecase.GetCurrentDateTimeUseCase
-import plus.vplan.app.core.common.usecase.GetCurrentProfileUseCase
-import plus.vplan.app.core.common.usecase.GetDayUseCase
+import plus.vplan.app.core.common.domain.usecase.GetCurrentDateTimeUseCase
+import plus.vplan.app.core.common.domain.usecase.GetCurrentProfileUseCase
+import plus.vplan.app.core.common.domain.usecase.GetDayUseCase
 import plus.vplan.app.core.data.populator.DayPopulator
 import plus.vplan.app.domain.usecase.CheckEMailStructureUseCase
 import plus.vplan.app.domain.usecase.OnNotificationGrantedUseCase

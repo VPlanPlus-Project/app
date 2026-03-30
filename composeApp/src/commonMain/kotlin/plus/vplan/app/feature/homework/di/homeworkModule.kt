@@ -3,6 +3,8 @@ package plus.vplan.app.feature.homework.di
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
+import plus.vplan.app.core.common.domain.usecase.HideVppIdBannerUseCase
+import plus.vplan.app.core.common.domain.usecase.IsVppIdBannerAllowedUseCase
 import plus.vplan.app.feature.homework.domain.usecase.AddTaskUseCase
 import plus.vplan.app.feature.homework.domain.usecase.CreateHomeworkUseCase
 import plus.vplan.app.feature.homework.domain.usecase.DeleteHomeworkUseCase
@@ -10,8 +12,6 @@ import plus.vplan.app.feature.homework.domain.usecase.DeleteTaskUseCase
 import plus.vplan.app.feature.homework.domain.usecase.EditHomeworkDueToUseCase
 import plus.vplan.app.feature.homework.domain.usecase.EditHomeworkSubjectInstanceUseCase
 import plus.vplan.app.feature.homework.domain.usecase.EditHomeworkVisibilityUseCase
-import plus.vplan.app.feature.homework.domain.usecase.HideVppIdBannerUseCase
-import plus.vplan.app.feature.homework.domain.usecase.IsVppIdBannerAllowedUseCase
 import plus.vplan.app.feature.homework.domain.usecase.ToggleTaskDoneUseCase
 import plus.vplan.app.feature.homework.domain.usecase.UpdateHomeworkUseCase
 import plus.vplan.app.feature.homework.domain.usecase.UpdateTaskUseCase

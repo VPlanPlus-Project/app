@@ -56,10 +56,12 @@ import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.StartTask
 import plus.vplan.app.assessment.detail.ui.AssessmentDetailDrawer
+import plus.vplan.app.core.data.vpp_id.VppIdRepository
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.application.network.ApiException
 import plus.vplan.app.core.ui.CoreUiRes
+import plus.vplan.app.core.ui.util.openUrl
 import plus.vplan.app.feature.calendar.page.ui.CalendarEvent
 import plus.vplan.app.feature.calendar.page.ui.CalendarViewModel
 import plus.vplan.app.feature.calendar.ui.CalendarScreen
@@ -88,8 +90,6 @@ import plus.vplan.app.feature.settings.page.school.ui.SchoolSettingsScreen
 import plus.vplan.app.feature.settings.page.security.ui.SecuritySettingsScreen
 import plus.vplan.app.feature.settings.ui.SettingsScreen
 import plus.vplan.app.feature.sync.domain.usecase.vpp.UpdateNewsUseCase
-import plus.vplan.app.getVppIdAuthUrl
-import plus.vplan.app.utils.openUrl
 import kotlin.uuid.Uuid
 
 const val ANIMATION_DURATION = 150
@@ -381,6 +381,7 @@ fun MainScreenHost(
     }
 
     if (profileViewModel.state.isSheetVisible) {
+        val vppIdRepository = koinInject<VppIdRepository>()
         val activeProfile = profileViewModel.state.currentProfile
         if (activeProfile != null) ProfileSwitcher(
             profiles = profileViewModel.state.profiles,
@@ -389,7 +390,7 @@ fun MainScreenHost(
             onSelectProfile = { profileViewModel.onEvent(ProfileScreenEvent.SetActiveProfile(it)) },
             onDismiss = { profileViewModel.onEvent(ProfileScreenEvent.SetProfileSwitcherVisibility(false)) },
             onCreateNewProfile = onNavigateToOnboarding,
-            onConnectVppId = { openUrl(getVppIdAuthUrl()) },
+            onConnectVppId = { openUrl(vppIdRepository.getAuthUrl()) },
             onOpenProfileSettings = {
                 navController.navigate(MainScreen.ProfileSettings(activeProfile.id.toString()))
             }

@@ -103,7 +103,6 @@ import plus.vplan.app.data.service.ProfileServiceImpl
 import plus.vplan.app.domain.di.domainModule
 import plus.vplan.app.domain.service.ProfileService
 import plus.vplan.app.feature.calendar.di.calendarModule
-import plus.vplan.app.feature.grades.di.gradeModule
 import plus.vplan.app.feature.home.di.homeModule
 import plus.vplan.app.feature.homework.di.homeworkModule
 import plus.vplan.app.feature.host.di.hostModule

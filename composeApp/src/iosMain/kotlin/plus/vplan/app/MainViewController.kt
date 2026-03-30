@@ -8,6 +8,8 @@ import co.touchlab.kermit.Logger
 import org.koin.core.KoinApplication
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import org.koin.core.context.loadKoinModules
+import org.koin.dsl.module
 import platform.UIKit.UIViewController
 import plus.vplan.app.core.data.file.OpenQuicklook
 import plus.vplan.app.feature.onboarding.IosDevInfoSheetHandler
@@ -43,6 +45,10 @@ fun mainViewController(
     updateTaskFromNotification(notificationTask)
 
     mainViewController = ComposeUIViewController { App(task = task) }
+
+    loadKoinModules(module {
+        single<UIViewController> { mainViewController }
+    })
 
     return mainViewController
 }

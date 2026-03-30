@@ -3,7 +3,7 @@ package plus.vplan.app.feature.home.ui.components
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import plus.vplan.app.core.ui.CoreUiRes
-import plus.vplan.app.feature.calendar.view.ui.components.InfoCard
+import plus.vplan.app.core.ui.components.InfoCard
 
 
 @Composable

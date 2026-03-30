@@ -209,6 +209,15 @@ class VppIdRepositoryImpl(
             ?: throw NetworkException(NetworkErrorKind.Other, "Parsing error")
     }
 
+    override fun getAuthUrl(): String {
+        return URLBuilder(AUTH_URL).apply {
+            appendPathSegments("authorize")
+            parameters.append("client_id", APP_ID)
+            parameters.append("redirect_uri", APP_REDIRECT_URI)
+            parameters.append("device_name", "unnamed device")
+        }.buildString()
+    }
+
     override suspend fun sendFeedback(access: VppSchoolAuthentication, content: String, email: String?): Unit = safe {
         val response = httpClient.post {
             url(URLBuilder(APP_API_URL).apply {

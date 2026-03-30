@@ -58,6 +58,8 @@ interface VppIdRepository {
      */
     suspend fun getSchulverwalterReauthUrl(vppId: VppId.Active): String
 
+    fun getAuthUrl(): String
+
     /**
      * Sends feedback with the given [access] credentials.
      * Throws [NetworkException] on network/server errors.

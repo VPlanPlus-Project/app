@@ -48,10 +48,10 @@ import plus.vplan.app.AppBuildConfig
 import plus.vplan.app.core.model.application.AppPlatform
 import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.core.ui.theme.displayFontFamily
+import plus.vplan.app.core.ui.util.openUrl
 import plus.vplan.app.feature.settings.page.info.ui.components.FeedbackDrawer
 import plus.vplan.app.feature.settings.ui.components.SettingsRecord
 import plus.vplan.app.ui.components.noRippleClickable
-import plus.vplan.app.utils.openUrl
 
 
 @Composable

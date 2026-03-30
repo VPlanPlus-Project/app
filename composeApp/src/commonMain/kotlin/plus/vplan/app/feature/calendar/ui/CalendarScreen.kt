@@ -93,6 +93,7 @@ import plus.vplan.app.assessment.detail.ui.AssessmentDetailDrawer
 import plus.vplan.app.core.model.Day
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.ui.CoreUiRes
+import plus.vplan.app.core.ui.components.InfoCard
 import plus.vplan.app.core.ui.modifier.thenIf
 import plus.vplan.app.core.ui.theme.CustomColor
 import plus.vplan.app.core.ui.theme.colors
@@ -101,7 +102,7 @@ import plus.vplan.app.core.ui.theme.getGroup
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.core.utils.date.shortDayOfWeekNames
 import plus.vplan.app.core.utils.date.untilText
-import plus.vplan.app.feature.assessment.ui.components.create.NewAssessmentDrawer
+import plus.vplan.app.feature.assessment.create.ui.NewAssessmentDrawer
 import plus.vplan.app.feature.calendar.page.domain.model.DateSelectionCause
 import plus.vplan.app.feature.calendar.page.domain.model.DisplayType
 import plus.vplan.app.feature.calendar.page.ui.CalendarDay
@@ -118,7 +119,6 @@ import plus.vplan.app.feature.calendar.view.ui.components.AgendaHead
 import plus.vplan.app.feature.calendar.view.ui.components.AssessmentCard
 import plus.vplan.app.feature.calendar.view.ui.components.FollowingLessons
 import plus.vplan.app.feature.calendar.view.ui.components.HomeworkCard
-import plus.vplan.app.feature.calendar.view.ui.components.InfoCard
 import plus.vplan.app.feature.homework.ui.components.NewHomeworkDrawer
 import plus.vplan.app.feature.homework.ui.components.detail.HomeworkDetailDrawer
 import plus.vplan.app.ui.components.MultiFab

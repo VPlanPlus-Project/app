@@ -66,6 +66,7 @@ import plus.vplan.app.core.model.Homework
 import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.ui.CoreUiRes
+import plus.vplan.app.core.ui.components.InfoCard
 import plus.vplan.app.core.ui.components.SubjectIcon
 import plus.vplan.app.core.ui.util.textunit.toDp
 import plus.vplan.app.core.utils.date.inWholeMinutes
@@ -82,7 +83,6 @@ import plus.vplan.app.feature.calendar.view.ui.components.AssessmentCard
 import plus.vplan.app.feature.calendar.view.ui.components.FollowingLessons
 import plus.vplan.app.feature.calendar.view.ui.components.HolidayScreen
 import plus.vplan.app.feature.calendar.view.ui.components.HomeworkCard
-import plus.vplan.app.feature.calendar.view.ui.components.InfoCard
 import kotlin.time.Duration.Companion.minutes
 
 @OptIn(ExperimentalLayoutApi::class)

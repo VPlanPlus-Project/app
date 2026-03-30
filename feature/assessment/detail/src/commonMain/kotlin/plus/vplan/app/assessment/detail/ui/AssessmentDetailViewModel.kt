@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
-import plus.vplan.app.core.common.usecase.GetCurrentProfileUseCase
+import plus.vplan.app.core.common.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.core.data.assessment.AssessmentRepository
 import plus.vplan.app.core.data.file.FileOperationProgress
 import plus.vplan.app.core.model.AppEntity

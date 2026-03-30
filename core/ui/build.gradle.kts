@@ -13,8 +13,20 @@ kotlin {
     }
 
     sourceSets {
+        androidMain.dependencies {
+            implementation(libs.androidx.browser)
+        }
+
         commonMain.dependencies {
+            implementation(libs.koin.core)
+
             implementation(project(":core:model"))
+            implementation(project(":core:utils"))
+            implementation(project(":core:platform"))
+        }
+
+        iosMain.dependencies {
+            implementation(libs.koin.core)
         }
     }
 }

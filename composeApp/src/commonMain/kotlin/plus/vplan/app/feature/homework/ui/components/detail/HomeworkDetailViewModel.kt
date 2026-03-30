@@ -20,7 +20,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
-import plus.vplan.app.core.common.usecase.GetCurrentProfileUseCase
+import plus.vplan.app.core.common.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.core.data.KeyValueRepository
 import plus.vplan.app.core.data.Keys
 import plus.vplan.app.core.data.file.FileOperationProgress

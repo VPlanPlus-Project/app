@@ -44,6 +44,7 @@ import plus.vplan.app.core.common.ui.components.CreatedByRow
 import plus.vplan.app.core.common.ui.components.DateSelectConfiguration
 import plus.vplan.app.core.common.ui.components.DateSelectDrawer
 import plus.vplan.app.core.common.ui.components.DueToRow
+import plus.vplan.app.core.common.ui.components.LessonSelectDrawer
 import plus.vplan.app.core.common.ui.components.SavedLocalRow
 import plus.vplan.app.core.common.ui.components.ShareStatusRow
 import plus.vplan.app.core.data.file.FileOperationProgress
@@ -62,7 +63,6 @@ import plus.vplan.app.core.ui.components.tableNameStyle
 import plus.vplan.app.core.ui.components.tableValueStyle
 import plus.vplan.app.feature.file.core.domain.model.AttachedFile
 import plus.vplan.app.feature.file.core.ui.FileRowWithThumbnail
-import plus.vplan.app.feature.homework.ui.components.create.LessonSelectDrawer
 import plus.vplan.app.feature.homework.ui.components.detail.components.NewTaskRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.StatusRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.TaskRow

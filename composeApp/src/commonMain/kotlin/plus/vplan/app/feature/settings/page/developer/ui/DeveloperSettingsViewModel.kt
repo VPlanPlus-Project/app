@@ -14,7 +14,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.plus
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import plus.vplan.app.core.common.usecase.GetCurrentProfileUseCase
+import plus.vplan.app.core.common.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.core.data.FcmRepository
 import plus.vplan.app.core.data.KeyValueRepository
 import plus.vplan.app.core.data.Keys

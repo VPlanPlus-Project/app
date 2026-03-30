@@ -17,8 +17,8 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import plus.vplan.app.core.common.usecase.GetCurrentDateTimeUseCase
-import plus.vplan.app.core.common.usecase.GetCurrentProfileUseCase
+import plus.vplan.app.core.common.domain.usecase.GetCurrentDateTimeUseCase
+import plus.vplan.app.core.common.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.core.data.day.DayRepository
 import plus.vplan.app.core.model.Assessment
 import plus.vplan.app.core.model.Day

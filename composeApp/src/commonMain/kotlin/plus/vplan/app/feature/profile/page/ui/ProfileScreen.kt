@@ -38,17 +38,18 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
+import org.koin.compose.koinInject
+import plus.vplan.app.core.data.vpp_id.VppIdRepository
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.VppId
 import plus.vplan.app.core.ui.CoreUiRes
+import plus.vplan.app.core.ui.util.openUrl
 import plus.vplan.app.core.utils.number.roundTo
 import plus.vplan.app.feature.main.ui.MainScreen
 import plus.vplan.app.feature.profile.page.ui.components.GradesCard
 import plus.vplan.app.feature.profile.page.ui.components.GradesCardFeaturedGrade
 import plus.vplan.app.feature.profile.page.ui.components.GradesCardFeaturedGrade.Value
 import plus.vplan.app.feature.profile.page.ui.components.ProfileTitle
-import plus.vplan.app.getVppIdAuthUrl
-import plus.vplan.app.utils.openUrl
 
 
 @Composable
@@ -130,8 +131,9 @@ private fun ProfileContent(
                         text = "wenn du eine vpp.ID mit beste.schule hinzufügst."
                     )
                     Spacer(Modifier.height(8.dp))
+                    val vppIdRepository = koinInject<VppIdRepository>()
                     TextButton(
-                        onClick = { openUrl(getVppIdAuthUrl()) },
+                        onClick = { openUrl(vppIdRepository.getAuthUrl()) },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Icon(

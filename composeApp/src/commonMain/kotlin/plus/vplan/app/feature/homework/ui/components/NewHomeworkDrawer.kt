@@ -21,7 +21,7 @@ import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.core.ui.CoreUiRes
-import plus.vplan.app.ui.components.FullscreenDrawer
+import plus.vplan.app.core.ui.components.FullscreenDrawer
 
 
 @OptIn(ExperimentalMaterial3Api::class)

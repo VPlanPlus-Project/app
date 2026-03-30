@@ -10,8 +10,8 @@ import plus.vplan.app.feature.assessment.core.domain.usecase.ChangeAssessmentTyp
 import plus.vplan.app.feature.assessment.core.domain.usecase.ChangeAssessmentVisibilityUseCase
 import plus.vplan.app.feature.assessment.core.domain.usecase.DeleteAssessmentUseCase
 import plus.vplan.app.feature.assessment.core.domain.usecase.RefreshAssessmentUseCase
-import plus.vplan.app.feature.assessment.domain.usecase.CreateAssessmentUseCase
-import plus.vplan.app.feature.assessment.ui.components.create.NewAssessmentViewModel
+import plus.vplan.app.feature.assessment.create.domain.usecase.CreateAssessmentUseCase
+import plus.vplan.app.feature.assessment.create.ui.NewAssessmentViewModel
 
 val assessmentModule = module {
     singleOf(::CreateAssessmentUseCase)
