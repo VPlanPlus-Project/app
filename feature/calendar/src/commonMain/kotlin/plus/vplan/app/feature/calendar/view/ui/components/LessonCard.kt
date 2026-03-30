@@ -44,6 +44,7 @@ import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.core.model.Teacher
 import plus.vplan.app.core.ui.components.SubjectIcon
+import plus.vplan.app.core.ui.modifier.premiumShadow
 import plus.vplan.app.core.ui.subjectColor
 import plus.vplan.app.core.ui.theme.AppTheme
 import plus.vplan.app.core.ui.theme.getGroup
@@ -68,14 +69,21 @@ fun LessonCard(
 
     Column(
         modifier = modifier
-            .clip(RoundedCornerShape(4.dp))
-            .background(colorFamily.container)
+            .premiumShadow(
+                color = Color.Black.copy(alpha = 0.1f),
+                blurRadius = 8.dp,
+                offsetY = 2.dp,
+                borderRadius = 8.dp
+            )
+            .clip(RoundedCornerShape(8.dp))
+            .background(colorFamily.desaturatedContainer)
             .padding(4.dp)
             .onSizeChanged {
+                @Suppress("AssignedValueIsNeverRead")
                 width = with(localDensity) { it.width.toDp() }
             }
     ) {
-        CompositionLocalProvider(LocalContentColor provides colorFamily.onContainer) {
+        CompositionLocalProvider(LocalContentColor provides colorFamily.onDesaturatedContainer) {
 
             if (isSmallVariant) {
                 Column(
@@ -87,7 +95,7 @@ fun LessonCard(
                         modifier = Modifier.size(24.dp),
                         innerPadding = 2.dp,
                         subject = lesson.lesson.subject,
-                        contentColor = colorFamily.onContainer,
+                        contentColor = colorFamily.onDesaturatedContainer,
                         containerColor = Color.Transparent
                     )
                     Text(
@@ -110,12 +118,12 @@ fun LessonCard(
                     modifier = Modifier.size(24.dp),
                     innerPadding = 2.dp,
                     subject = lesson.lesson.subject,
-                    contentColor = colorFamily.onContainer,
+                    contentColor = colorFamily.onDesaturatedContainer,
                     containerColor = Color.Transparent
                 )
 
                 FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     Text(
                         text = lesson.lesson.subject ?: "Entfall",
