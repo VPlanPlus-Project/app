@@ -39,6 +39,12 @@ kotlin {
             implementation(project(":core:analytics"))
             implementation(project(":core:common"))
 
+            implementation(project(":feature:assessment:detail"))
+            implementation(project(":feature:assessment:create"))
+
+            implementation(project(":feature:homework:detail"))
+            implementation(project(":feature:homework:create"))
+
             implementation(libs.vpp.sp24)
             implementation(libs.kermit)
 

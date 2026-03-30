@@ -14,8 +14,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.ui.CoreUiRes
+import plus.vplan.app.core.ui.modifier.noRippleClickable
 import plus.vplan.app.core.ui.theme.displayFontFamily
-import plus.vplan.app.ui.components.noRippleClickable
 
 
 @Composable

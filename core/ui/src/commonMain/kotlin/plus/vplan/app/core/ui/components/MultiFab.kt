@@ -1,4 +1,4 @@
-package plus.vplan.app.ui.components
+package plus.vplan.app.core.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.AnimationConstants.DefaultDurationMillis
@@ -44,7 +44,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.ui.CoreUiRes
-import plus.vplan.app.utils.toDp
+import plus.vplan.app.core.ui.modifier.noRippleClickable
+import plus.vplan.app.core.ui.util.toDp
 import kotlin.math.roundToInt
 
 @Composable

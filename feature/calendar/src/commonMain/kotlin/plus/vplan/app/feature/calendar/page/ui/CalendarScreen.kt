@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.calendar.ui
+package plus.vplan.app.feature.calendar.page.ui
 
 
 import androidx.compose.animation.AnimatedContent
@@ -94,6 +94,8 @@ import plus.vplan.app.core.model.Day
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.core.ui.components.InfoCard
+import plus.vplan.app.core.ui.components.MultiFab
+import plus.vplan.app.core.ui.components.MultiFabItem
 import plus.vplan.app.core.ui.modifier.thenIf
 import plus.vplan.app.core.ui.theme.CustomColor
 import plus.vplan.app.core.ui.theme.colors
@@ -105,10 +107,6 @@ import plus.vplan.app.core.utils.date.untilText
 import plus.vplan.app.feature.assessment.create.ui.NewAssessmentDrawer
 import plus.vplan.app.feature.calendar.page.domain.model.DateSelectionCause
 import plus.vplan.app.feature.calendar.page.domain.model.DisplayType
-import plus.vplan.app.feature.calendar.page.ui.CalendarDay
-import plus.vplan.app.feature.calendar.page.ui.CalendarEvent
-import plus.vplan.app.feature.calendar.page.ui.CalendarState
-import plus.vplan.app.feature.calendar.page.ui.CalendarViewModel
 import plus.vplan.app.feature.calendar.page.ui.components.DisplaySelectType
 import plus.vplan.app.feature.calendar.page.ui.components.date_selector.ScrollableDateSelector
 import plus.vplan.app.feature.calendar.page.ui.components.date_selector.weekHeightDefault
@@ -121,8 +119,6 @@ import plus.vplan.app.feature.calendar.view.ui.components.FollowingLessons
 import plus.vplan.app.feature.calendar.view.ui.components.HomeworkCard
 import plus.vplan.app.feature.homework.create.ui.NewHomeworkDrawer
 import plus.vplan.app.feature.homework.detail.ui.HomeworkDetailDrawer
-import plus.vplan.app.ui.components.MultiFab
-import plus.vplan.app.ui.components.MultiFabItem
 import kotlin.math.roundToInt
 
 private const val CONTENT_PAGER_SIZE = 800
