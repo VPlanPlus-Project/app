@@ -11,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.ui.subjectColor
@@ -18,12 +19,18 @@ import plus.vplan.app.core.ui.subjectIcon
 import plus.vplan.app.core.ui.theme.getGroup
 
 @Composable
-fun SubjectIcon(modifier: Modifier = Modifier, subject: String?, containerColor: Color = subject.subjectColor().getGroup().container, contentColor: Color = subject.subjectColor().getGroup().onContainer) {
+fun SubjectIcon(
+    modifier: Modifier = Modifier,
+    subject: String?,
+    innerPadding: Dp = 4.dp,
+    containerColor: Color = subject.subjectColor().getGroup().container,
+    contentColor: Color = subject.subjectColor().getGroup().onContainer
+) {
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(2.dp))
             .background(containerColor)
-            .padding(4.dp),
+            .padding(innerPadding),
         contentAlignment = Alignment.Center
     ) {
         Icon(

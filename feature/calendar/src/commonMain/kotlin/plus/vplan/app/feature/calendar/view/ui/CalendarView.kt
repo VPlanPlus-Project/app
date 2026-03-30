@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -26,11 +25,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -48,34 +45,25 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.times
 import androidx.compose.ui.zIndex
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
-import kotlinx.datetime.format
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.model.Assessment
 import plus.vplan.app.core.model.Day
 import plus.vplan.app.core.model.Homework
 import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.core.model.Profile
+import plus.vplan.app.core.model.ProfileType
 import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.core.ui.components.InfoCard
-import plus.vplan.app.core.ui.components.SubjectIcon
-import plus.vplan.app.core.ui.util.textunit.toDp
 import plus.vplan.app.core.utils.date.inWholeMinutes
 import plus.vplan.app.core.utils.date.minusWithCapAtMidnight
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.core.utils.date.plusWithCapAtMidnight
-import plus.vplan.app.core.utils.date.regularTimeFormat
 import plus.vplan.app.core.utils.date.until
-import plus.vplan.app.core.utils.string.DOT
 import plus.vplan.app.core.utils.ui.color.transparent
 import plus.vplan.app.feature.calendar.view.domain.model.LessonLayoutingInfo
 import plus.vplan.app.feature.calendar.view.domain.model.LessonRendering
@@ -83,6 +71,7 @@ import plus.vplan.app.feature.calendar.view.ui.components.AssessmentCard
 import plus.vplan.app.feature.calendar.view.ui.components.FollowingLessons
 import plus.vplan.app.feature.calendar.view.ui.components.HolidayScreen
 import plus.vplan.app.feature.calendar.view.ui.components.HomeworkCard
+import plus.vplan.app.feature.calendar.view.ui.components.LessonCard
 import kotlin.time.Duration.Companion.minutes
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -106,7 +95,7 @@ fun CalendarView(
     val localDensity = LocalDensity.current
     var availableWidth by remember { mutableStateOf(0.dp) }
     var bottomIslandHeight by remember { mutableStateOf(0.dp) }
-    val minute = 1.25.dp
+    val minute = 1.5.dp
     Column(
         modifier = modifier
             .clipToBounds()
@@ -133,7 +122,7 @@ fun CalendarView(
 
                                     LaunchedEffect(lessons.size, autoLimitTimeSpanToLessons) {
                                         if (!autoLimitTimeSpanToLessons || lessons.isEmpty()) return@LaunchedEffect
-                                        start = lessons.minOf { it.lesson.lessonTime!!.start }.minusWithCapAtMidnight(30.minutes)
+                                        start = lessons.minOf { it.lesson.lessonTime!!.start }.minusWithCapAtMidnight(15.minutes)
                                         end = lessons.maxOf { it.lesson.lessonTime!!.end }.plusWithCapAtMidnight(30.minutes)
                                     }
                                     Box(
@@ -182,147 +171,20 @@ fun CalendarView(
                                                 thickness = 2.dp
                                             )
                                         }
-                                        lessons.forEachIndexed { i, lesson ->
+                                        lessons.forEach { lesson ->
                                             val y = (lesson.lesson.lessonTime!!.start.inWholeMinutes().toFloat() - start.inWholeMinutes()) * minute
                                             Box(
                                                 modifier = Modifier
                                                     .width(availableWidth / lesson.of)
-                                                    .padding(horizontal = 8.dp)
+                                                    .padding(horizontal = 4.dp)
                                                     .height(lesson.lesson.lessonTime!!.start.until(lesson.lesson.lessonTime!!.end).inWholeMinutes.toFloat() * minute)
                                                     .offset(y = y, x = (availableWidth / lesson.of) * lesson.sideShift)
-                                                    .clip(RoundedCornerShape(6.dp))
-                                                    .background(
-                                                        if (lesson.lesson is Lesson.SubstitutionPlanLesson && lesson.lesson.isCancelled) MaterialTheme.colorScheme.errorContainer
-                                                        else MaterialTheme.colorScheme.surfaceVariant
-                                                    )
-                                                    .padding(4.dp)
                                             ) {
-                                                CompositionLocalProvider(
-                                                    LocalContentColor provides if (lesson.lesson is Lesson.SubstitutionPlanLesson && lesson.lesson.subject == null) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSurfaceVariant
-                                                ) {
-                                                    Column {
-                                                        Row(
-                                                            verticalAlignment = Alignment.Top,
-                                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                                        ) {
-                                                            if (lesson.lesson is Lesson.SubstitutionPlanLesson && lesson.lesson.isSubjectChanged) SubjectIcon(
-                                                                modifier = Modifier.size(MaterialTheme.typography.bodyMedium.lineHeight.toDp() + 4.dp),
-                                                                subject = lesson.lesson.subject,
-                                                                contentColor = MaterialTheme.colorScheme.onError,
-                                                                containerColor = MaterialTheme.colorScheme.error
-                                                            )
-                                                            else SubjectIcon(
-                                                                modifier = Modifier.size(MaterialTheme.typography.bodyMedium.lineHeight.toDp() + 4.dp),
-                                                                subject = lesson.lesson.subject
-                                                            )
-                                                            Column {
-                                                                FlowRow(
-                                                                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                                                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                                                ) {
-                                                                    val itemHeight = max(MaterialTheme.typography.bodyMedium.lineHeight.toDp(), MaterialTheme.typography.bodySmall.lineHeight.toDp())
-                                                                    Box(
-                                                                        modifier = Modifier.height(itemHeight),
-                                                                        contentAlignment = Alignment.BottomStart
-                                                                    ) {
-                                                                        Text(
-                                                                            text = buildAnnotatedString {
-                                                                                withStyle(style = MaterialTheme.typography.bodyMedium.toSpanStyle()) {
-                                                                                    if (lesson.lesson.isCancelled) withStyle(style = MaterialTheme.typography.bodyMedium.toSpanStyle().copy(textDecoration = TextDecoration.LineThrough)) {
-                                                                                        if (lesson.lesson is Lesson.SubstitutionPlanLesson && lesson.lesson.subjectInstance != null) append(lesson.lesson.subjectInstance!!.subject + " ")
-                                                                                        append("Entfall")
-                                                                                    } else append(lesson.lesson.subject)
-                                                                                }
-                                                                            },
-                                                                            style = MaterialTheme.typography.bodySmall
-                                                                        )
-                                                                    }
-                                                                    if (lesson.lesson.groups.isNotEmpty() && profile !is Profile.StudentProfile) Box(
-                                                                        modifier = Modifier.height(itemHeight),
-                                                                        contentAlignment = Alignment.BottomStart
-                                                                    ) {
-                                                                        Text(
-                                                                            text = lesson.lesson.groups.joinToString { it.name },
-                                                                            style = MaterialTheme.typography.labelMedium
-                                                                        )
-                                                                    }
-                                                                    if (lesson.lesson.rooms.orEmpty().isNotEmpty()) Box(
-                                                                        modifier = Modifier.height(itemHeight),
-                                                                        contentAlignment = Alignment.BottomStart
-                                                                    ) {
-                                                                        Text(
-                                                                            text = lesson.lesson.rooms.orEmpty().joinToString { it.name },
-                                                                            style = MaterialTheme.typography.labelMedium
-                                                                        )
-                                                                    }
-                                                                    if (lesson.lesson.teachers.isNotEmpty()) Box(
-                                                                        modifier = Modifier.height(itemHeight),
-                                                                        contentAlignment = Alignment.BottomStart
-                                                                    ) {
-                                                                        Text(
-                                                                            text = lesson.lesson.teachers.joinToString { it.name },
-                                                                            style = MaterialTheme.typography.labelMedium
-                                                                        )
-                                                                    }
-                                                                }
-                                                                Text(
-                                                                    buildString {
-                                                                        append(lesson.lesson.lessonTime!!.lessonNumber)
-                                                                        append(". $DOT ")
-                                                                        append(lesson.lesson.lessonTime!!.start.format(regularTimeFormat))
-                                                                        append(" - ")
-                                                                        append(lesson.lesson.lessonTime!!.end.format(regularTimeFormat))
-                                                                    },
-                                                                    style = MaterialTheme.typography.labelSmall,
-                                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                                    maxLines = 1,
-                                                                    overflow = TextOverflow.Ellipsis
-                                                                )
-                                                            }
-                                                        }
-                                                        if (lesson.lesson is Lesson.SubstitutionPlanLesson && lesson.lesson.info != null) Row(
-                                                            verticalAlignment = Alignment.CenterVertically,
-                                                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                                            modifier = Modifier.padding(start = 16.dp)
-                                                        ) {
-                                                            Icon(
-                                                                painter = painterResource(CoreUiRes.drawable.info),
-                                                                contentDescription = null,
-                                                                modifier = Modifier.size(8.dp),
-                                                                tint = MaterialTheme.colorScheme.onSurface
-                                                            )
-                                                            Text(
-                                                                text = lesson.lesson.info!!,
-                                                                style = MaterialTheme.typography.bodySmall,
-                                                                maxLines = 1,
-                                                                overflow = TextOverflow.Ellipsis
-                                                            )
-                                                        }
-                                                        if (lesson.lesson is Lesson.TimetableLesson && lesson.lesson.limitedToWeeks != null) Row {
-                                                            Box(
-                                                                modifier = Modifier
-                                                                    .padding(end = 4.dp)
-                                                                    .size(MaterialTheme.typography.bodySmall.fontSize.toDp()),
-                                                                contentAlignment = Alignment.Center
-                                                            ) {
-                                                                Icon(
-                                                                    painter = painterResource(CoreUiRes.drawable.info),
-                                                                    contentDescription = null,
-                                                                    modifier = Modifier
-                                                                        .size(8.dp),
-                                                                    tint = MaterialTheme.colorScheme.onSurface
-                                                                )
-                                                            }
-                                                            if (lesson.lesson.limitedToWeeks != null && lesson.lesson.limitedToWeeks.orEmpty().isNotEmpty()) Text(
-                                                                text = if (lesson.lesson.limitedToWeeks!!.size == 1) "Nur in Schulwoche ${lesson.lesson.limitedToWeeks!!.first()}"
-                                                                else "Nur in Schulwochen ${lesson.lesson.limitedToWeeks!!.map { it.weekIndex }.sorted().dropLast(1).joinToString()} und ${lesson.lesson.limitedToWeeks!!.map { it.weekIndex }.maxOf { it }}",
-                                                                style = MaterialTheme.typography.bodySmall,
-                                                                maxLines = 1,
-                                                                overflow = TextOverflow.Ellipsis
-                                                            )
-                                                        }
-                                                    }
-                                                }
+                                                LessonCard(
+                                                    modifier = Modifier.fillMaxSize(),
+                                                    lesson = lesson,
+                                                    currentProfileType = profile?.profileType ?: ProfileType.STUDENT
+                                                )
                                             }
                                         }
                                     }
