@@ -44,6 +44,7 @@ import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.core.model.VppId
 import plus.vplan.app.core.ui.CoreUiRes
+import plus.vplan.app.core.ui.components.Badge
 import plus.vplan.app.core.ui.components.Button
 import plus.vplan.app.core.ui.components.ButtonSize
 import plus.vplan.app.core.ui.components.ButtonState
@@ -52,7 +53,6 @@ import plus.vplan.app.core.ui.theme.ColorToken
 import plus.vplan.app.core.ui.theme.customColors
 import plus.vplan.app.core.utils.string.DOT
 import plus.vplan.app.feature.profile.settings.page.main.ui.vpp_id_management.components.LogoutDialog
-import plus.vplan.app.ui.components.Badge
 import plus.vplan.app.utils.safeBottomPadding
 
 

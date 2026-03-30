@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import plus.vplan.app.assessment.detail.ui.AssessmentDetailDrawer
 import plus.vplan.app.feature.grades.detail.ui.GradeDetailDrawer
-import plus.vplan.app.feature.homework.ui.components.detail.HomeworkDetailDrawer
+import plus.vplan.app.feature.homework.detail.ui.HomeworkDetailDrawer
 import plus.vplan.app.feature.main.ui.MainScreen
 import plus.vplan.app.feature.search.ui.main.components.SearchBar
 import plus.vplan.app.feature.search.ui.main.components.SearchResults

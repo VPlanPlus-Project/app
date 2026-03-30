@@ -119,8 +119,8 @@ import plus.vplan.app.feature.calendar.view.ui.components.AgendaHead
 import plus.vplan.app.feature.calendar.view.ui.components.AssessmentCard
 import plus.vplan.app.feature.calendar.view.ui.components.FollowingLessons
 import plus.vplan.app.feature.calendar.view.ui.components.HomeworkCard
-import plus.vplan.app.feature.homework.ui.components.NewHomeworkDrawer
-import plus.vplan.app.feature.homework.ui.components.detail.HomeworkDetailDrawer
+import plus.vplan.app.feature.homework.create.ui.NewHomeworkDrawer
+import plus.vplan.app.feature.homework.detail.ui.HomeworkDetailDrawer
 import plus.vplan.app.ui.components.MultiFab
 import plus.vplan.app.ui.components.MultiFabItem
 import kotlin.math.roundToInt

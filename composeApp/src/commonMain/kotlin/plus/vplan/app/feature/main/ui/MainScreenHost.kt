@@ -70,7 +70,7 @@ import plus.vplan.app.feature.grades.list.ui.GradesScreen
 import plus.vplan.app.feature.grades.ui.AnalyticsScreen
 import plus.vplan.app.feature.home.ui.HomeScreen
 import plus.vplan.app.feature.home.ui.HomeViewModel
-import plus.vplan.app.feature.homework.ui.components.detail.HomeworkDetailDrawer
+import plus.vplan.app.feature.homework.detail.ui.HomeworkDetailDrawer
 import plus.vplan.app.feature.profile.page.ui.ProfileScreen
 import plus.vplan.app.feature.profile.page.ui.ProfileScreenEvent
 import plus.vplan.app.feature.profile.page.ui.ProfileViewModel
