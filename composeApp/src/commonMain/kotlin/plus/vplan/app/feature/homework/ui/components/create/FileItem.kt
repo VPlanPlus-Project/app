@@ -26,7 +26,7 @@ import io.github.vinceglb.filekit.extension
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.core.utils.string.DOT
-import plus.vplan.app.ui.common.AttachedFile
+import plus.vplan.app.feature.file.core.domain.model.AttachedFile
 import plus.vplan.app.utils.toHumanSize
 
 

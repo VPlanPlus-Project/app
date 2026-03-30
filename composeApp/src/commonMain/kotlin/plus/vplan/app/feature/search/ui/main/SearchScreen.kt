@@ -23,7 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import plus.vplan.app.feature.assessment.ui.components.detail.AssessmentDetailDrawer
+import plus.vplan.app.assessment.detail.ui.AssessmentDetailDrawer
 import plus.vplan.app.feature.grades.detail.ui.GradeDetailDrawer
 import plus.vplan.app.feature.homework.ui.components.detail.HomeworkDetailDrawer
 import plus.vplan.app.feature.main.ui.MainScreen

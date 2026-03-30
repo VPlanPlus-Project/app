@@ -10,8 +10,8 @@ import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.domain.service.ProfileService
-import plus.vplan.app.domain.usecase.file.UploadFileUseCase
-import plus.vplan.app.ui.common.AttachedFile
+import plus.vplan.app.feature.file.core.domain.model.AttachedFile
+import plus.vplan.app.feature.file.core.domain.usecase.UploadFileUseCase
 
 class CreateAssessmentUseCase(
     private val assessmentRepository: AssessmentRepository,

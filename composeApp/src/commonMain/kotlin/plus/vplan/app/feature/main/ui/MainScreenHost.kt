@@ -55,11 +55,11 @@ import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.StartTask
+import plus.vplan.app.assessment.detail.ui.AssessmentDetailDrawer
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.application.network.ApiException
 import plus.vplan.app.core.ui.CoreUiRes
-import plus.vplan.app.feature.assessment.ui.components.detail.AssessmentDetailDrawer
 import plus.vplan.app.feature.calendar.page.ui.CalendarEvent
 import plus.vplan.app.feature.calendar.page.ui.CalendarViewModel
 import plus.vplan.app.feature.calendar.ui.CalendarScreen

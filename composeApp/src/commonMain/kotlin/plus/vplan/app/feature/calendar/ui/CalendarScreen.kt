@@ -37,9 +37,6 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
@@ -92,6 +89,7 @@ import kotlinx.datetime.isoDayNumber
 import kotlinx.datetime.plus
 import kotlinx.datetime.until
 import org.jetbrains.compose.resources.painterResource
+import plus.vplan.app.assessment.detail.ui.AssessmentDetailDrawer
 import plus.vplan.app.core.model.Day
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.ui.CoreUiRes
@@ -104,7 +102,6 @@ import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.core.utils.date.shortDayOfWeekNames
 import plus.vplan.app.core.utils.date.untilText
 import plus.vplan.app.feature.assessment.ui.components.create.NewAssessmentDrawer
-import plus.vplan.app.feature.assessment.ui.components.detail.AssessmentDetailDrawer
 import plus.vplan.app.feature.calendar.page.domain.model.DateSelectionCause
 import plus.vplan.app.feature.calendar.page.domain.model.DisplayType
 import plus.vplan.app.feature.calendar.page.ui.CalendarDay
@@ -587,7 +584,7 @@ private fun CalendarScreenContent(
                 .onGloballyPositioned { multiFabFabPosition = it.positionOnScreen() },
         ) {
             Icon(
-                imageVector = Icons.Default.Add,
+                painter = painterResource(CoreUiRes.drawable.plus),
                 contentDescription = null,
                 modifier = Modifier.rotate(animateFloatAsState(if (isMultiFabExpanded) 180+45f else 0f,  label = "close button").value)
             )
@@ -604,7 +601,7 @@ private fun CalendarScreenContent(
                 onClick = { isMultiFabExpanded = false; isNewHomeworkDrawerOpen = true }
             ) else null,
             if (state.currentProfile is Profile.StudentProfile) MultiFabItem(
-                icon = { Icon(imageVector = Icons.Default.Edit, contentDescription = null) },
+                icon = { Icon(painter = painterResource(CoreUiRes.drawable.pencil), contentDescription = null) },
                 text = "Neue Leistungserhebung",
                 textSuffix = { Spacer(Modifier.size(8.dp)) },
                 onClick = { isMultiFabExpanded = false; isNewAssessmentDrawerOpen = true }

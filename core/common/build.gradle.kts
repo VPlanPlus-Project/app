@@ -17,6 +17,8 @@ kotlin {
             implementation(project(":core:model"))
             implementation(project(":core:utils"))
             implementation(project(":core:ui"))
+
+            implementation(libs.filekit.core)
         }
     }
 }

@@ -20,8 +20,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -44,6 +42,8 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import org.jetbrains.compose.resources.painterResource
+import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.utils.toDp
 import kotlin.math.roundToInt
 
@@ -139,7 +139,7 @@ fun MultiFab(
                         .onSizeChanged { mainFabSize = it }
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Add,
+                        painter = painterResource(CoreUiRes.drawable.plus),
                         contentDescription = null,
                         modifier = Modifier.rotate(animateFloatAsState(if (isVisible) 180+45f else 0f,  label = "close button").value)
                     )

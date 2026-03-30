@@ -59,6 +59,9 @@ kotlin {
 //            export(project(":core:common"))
 
 
+            export(project(":feature:assessment:detail"))
+            export(project(":feature:assessment:core"))
+            export(project(":feature:file:core"))
             export(project(":feature:calendar"))
             export(project(":feature:onboarding"))
             export(project(":feature:grades"))
@@ -76,7 +79,6 @@ kotlin {
             implementation(libs.androidx.activity.compose)
             implementation(libs.androidx.biometric)
             implementation(libs.androidx.browser)
-            implementation(libs.androidx.icons.extended)
             implementation(libs.androidx.sqlite.framework)
             implementation(libs.androidx.work.runtime.ktx)
 
@@ -118,6 +120,9 @@ kotlin {
             implementation(project(":core:common"))
 
 
+            implementation(project(":feature:assessment:detail"))
+            implementation(project(":feature:assessment:core"))
+            implementation(project(":feature:file:core"))
             implementation(project(":feature:calendar"))
             implementation(project(":feature:onboarding"))
             implementation(project(":feature:grades"))
@@ -126,7 +131,6 @@ kotlin {
             implementation(libs.compose.components.resources)
             implementation(libs.compose.foundation)
             implementation(libs.compose.material3)
-            implementation(compose.materialIconsExtended)
             implementation(libs.compose.runtime)
             implementation(libs.compose.ui)
             implementation(libs.compose.ui.tooling.preview)

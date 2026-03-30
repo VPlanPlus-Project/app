@@ -10,12 +10,12 @@ import plus.vplan.app.domain.usecase.CheckEMailStructureUseCase
 import plus.vplan.app.domain.usecase.OnNotificationGrantedUseCase
 import plus.vplan.app.domain.usecase.SetCurrentProfileUseCase
 import plus.vplan.app.domain.usecase.UpdateFirebaseTokenUseCase
-import plus.vplan.app.domain.usecase.file.DeleteFileUseCase
-import plus.vplan.app.domain.usecase.file.DownloadFileUseCase
-import plus.vplan.app.domain.usecase.file.GetFileThumbnailUseCase
-import plus.vplan.app.domain.usecase.file.OpenFileUseCase
-import plus.vplan.app.domain.usecase.file.RenameFileUseCase
-import plus.vplan.app.domain.usecase.file.UploadFileUseCase
+import plus.vplan.app.feature.file.core.domain.usecase.DeleteFileUseCase
+import plus.vplan.app.feature.file.core.domain.usecase.DownloadFileUseCase
+import plus.vplan.app.feature.file.core.domain.usecase.GetFileThumbnailUseCase
+import plus.vplan.app.feature.file.core.domain.usecase.OpenFileUseCase
+import plus.vplan.app.feature.file.core.domain.usecase.RenameFileUseCase
+import plus.vplan.app.feature.file.core.domain.usecase.UploadFileUseCase
 
 val domainModule = module {
     singleOf(::GetCurrentDateTimeUseCase)

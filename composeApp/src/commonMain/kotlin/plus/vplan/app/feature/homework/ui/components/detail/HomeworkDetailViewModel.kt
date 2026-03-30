@@ -34,12 +34,13 @@ import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.core.model.application.UnoptimisticTaskState
 import plus.vplan.app.core.model.application.UpdateResult
-import plus.vplan.app.domain.usecase.file.DeleteFileUseCase
-import plus.vplan.app.domain.usecase.file.DownloadFileUseCase
-import plus.vplan.app.domain.usecase.file.GetFileThumbnailUseCase
-import plus.vplan.app.domain.usecase.file.OpenFileUseCase
-import plus.vplan.app.domain.usecase.file.RenameFileUseCase
-import plus.vplan.app.domain.usecase.file.UploadFileUseCase
+import plus.vplan.app.feature.file.core.domain.model.AttachedFile
+import plus.vplan.app.feature.file.core.domain.usecase.DeleteFileUseCase
+import plus.vplan.app.feature.file.core.domain.usecase.DownloadFileUseCase
+import plus.vplan.app.feature.file.core.domain.usecase.GetFileThumbnailUseCase
+import plus.vplan.app.feature.file.core.domain.usecase.OpenFileUseCase
+import plus.vplan.app.feature.file.core.domain.usecase.RenameFileUseCase
+import plus.vplan.app.feature.file.core.domain.usecase.UploadFileUseCase
 import plus.vplan.app.feature.homework.domain.usecase.AddTaskUseCase
 import plus.vplan.app.feature.homework.domain.usecase.DeleteHomeworkUseCase
 import plus.vplan.app.feature.homework.domain.usecase.DeleteTaskUseCase
@@ -49,7 +50,6 @@ import plus.vplan.app.feature.homework.domain.usecase.EditHomeworkVisibilityUseC
 import plus.vplan.app.feature.homework.domain.usecase.ToggleTaskDoneUseCase
 import plus.vplan.app.feature.homework.domain.usecase.UpdateHomeworkUseCase
 import plus.vplan.app.feature.homework.domain.usecase.UpdateTaskUseCase
-import plus.vplan.app.ui.common.AttachedFile
 
 class HomeworkDetailViewModel(
     private val homeworkRepository: HomeworkRepository,
