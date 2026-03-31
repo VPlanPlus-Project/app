@@ -59,6 +59,7 @@ class SchoolSearchViewModel(
                     it.copy(
                         searchQuery = event.query,
                         textFieldError = null,
+                        suppressAutoKeyboardOnShow = true,
                     )
                 }
                 search()
@@ -76,7 +77,7 @@ class SchoolSearchViewModel(
                             name  = "Unknown School",
                             sp24Id = state.value.searchQuery.toInt(),
                             searchOptimizedName = state.value.searchQuery
-                        )
+                        ),
                     )
                 }
             }
@@ -88,7 +89,7 @@ class SchoolSearchViewModel(
                 state.update {
                     it.copy(
                         isSchoolActivelySelected = true,
-                        selected = event.school
+                        selected = event.school,
                     )
                 }
             }
@@ -99,6 +100,7 @@ class SchoolSearchViewModel(
 data class OnboardingSchoolSearchState(
     val searchQuery: String = "",
     val results: SchoolResults = SchoolResults.Loading,
+    val suppressAutoKeyboardOnShow: Boolean = false,
     val textFieldError: SchoolSearchTextFieldError? = null,
     val selected: OnboardingSchoolOption? = null,
     val isSchoolActivelySelected: Boolean = false,

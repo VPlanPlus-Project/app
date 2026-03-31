@@ -79,7 +79,7 @@ import plus.vplan.app.feature.calendar.ui.components.agenda.HomeworkCard
 import plus.vplan.app.feature.home.ui.components.FollowingLessons
 import plus.vplan.app.feature.home.ui.components.HolidayScreen
 import plus.vplan.app.feature.home.ui.components.headerFont
-import plus.vplan.app.ui.components.InfoCard
+import plus.vplan.app.core.ui.components.InfoCard
 import plus.vplan.app.utils.inWholeMinutes
 import plus.vplan.app.utils.minusWithCapAtMidnight
 import plus.vplan.app.utils.plusWithCapAtMidnight

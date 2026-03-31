@@ -59,7 +59,7 @@ import plus.vplan.app.ui.common.AttachedFile
 import plus.vplan.app.ui.components.DateSelectConfiguration
 import plus.vplan.app.ui.components.DateSelectDrawer
 import plus.vplan.app.ui.components.FullscreenDrawerContext
-import plus.vplan.app.ui.components.InfoCard
+import plus.vplan.app.core.ui.components.InfoCard
 
 
 @Composable

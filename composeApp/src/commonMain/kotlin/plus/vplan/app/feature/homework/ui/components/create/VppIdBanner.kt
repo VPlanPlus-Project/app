@@ -12,7 +12,7 @@ import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.core.ui.theme.ColorToken
 import plus.vplan.app.core.ui.theme.customColors
 import plus.vplan.app.getVppIdAuthUrl
-import plus.vplan.app.ui.components.InfoCard
+import plus.vplan.app.core.ui.components.InfoCard
 import plus.vplan.app.utils.openUrl
 
 

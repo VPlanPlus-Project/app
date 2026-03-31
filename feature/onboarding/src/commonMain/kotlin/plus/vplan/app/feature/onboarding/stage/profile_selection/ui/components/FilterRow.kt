@@ -1,9 +1,11 @@
 package plus.vplan.app.feature.onboarding.stage.profile_selection.ui.components
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -17,12 +19,14 @@ import plus.vplan.app.core.ui.CoreUiRes
 
 @Composable
 internal fun FilterRow(
+    modifier: Modifier = Modifier,
     currentSelection: ProfileType?,
     onClick: (ProfileType?) -> Unit
 ) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier.horizontalScroll(rememberScrollState())
     ) {
         FilterChip(
             selected = currentSelection == ProfileType.STUDENT,

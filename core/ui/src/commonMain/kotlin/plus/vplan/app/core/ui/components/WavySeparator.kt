@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.grades.list.ui.components.subject
+package plus.vplan.app.core.ui.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.material3.MaterialTheme
@@ -8,6 +8,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlin.math.PI
 import kotlin.math.sin
@@ -16,15 +17,18 @@ import kotlin.math.sin
 @Preview
 fun WavySeparator(
     modifier: Modifier = Modifier,
-    color: Color = MaterialTheme.colorScheme.outlineVariant
+    color: Color = MaterialTheme.colorScheme.outlineVariant,
+    amplitude: Float = 2f,
+    frequency: Float = 50f,
+    strokeWidth: Dp = 1.dp
 ) {
     Canvas(
         modifier = modifier
     ) {
         val width = size.width
         val height = size.height
-        val amplitude = height / 2  // peak of the wave
-        val frequency = width / 50  // number of cycles across the canvas
+        val amplitude = height / amplitude  // peak of the wave
+        val frequency = width / frequency // number of cycles across the canvas
 
         val path = Path().apply {
             moveTo(0f, height / 2)  // start at middle-left
@@ -37,7 +41,7 @@ fun WavySeparator(
         drawPath(
             path = path,
             color = color,
-            style = Stroke(width = 1.dp.toPx())
+            style = Stroke(width = strokeWidth.toPx())
         )
     }
 }
