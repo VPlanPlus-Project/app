@@ -5,18 +5,25 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.MutatePriority
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.gestures.stopScroll
@@ -34,6 +41,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -69,10 +77,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.BlurredEdgeTreatment
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -85,41 +95,56 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.coerceAtMost
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
 import androidx.compose.ui.zIndex
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
+import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
 import kotlinx.datetime.format.MonthNames
+import kotlinx.datetime.format.Padding
+import kotlinx.datetime.format.char
 import kotlinx.datetime.isoDayNumber
 import kotlinx.datetime.plus
+import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.until
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.assessment.detail.ui.AssessmentDetailDrawer
 import plus.vplan.app.core.model.Day
+import plus.vplan.app.core.model.HomeworkStatus
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.ProfileType
+import plus.vplan.app.core.model.toName
 import plus.vplan.app.core.ui.CoreUiRes
+import plus.vplan.app.core.ui.components.Badge
 import plus.vplan.app.core.ui.components.InfoCard
 import plus.vplan.app.core.ui.components.MultiFab
 import plus.vplan.app.core.ui.components.MultiFabItem
+import plus.vplan.app.core.ui.components.SubjectIcon
+import plus.vplan.app.core.ui.modifier.noRippleClickable
 import plus.vplan.app.core.ui.modifier.premiumShadow
 import plus.vplan.app.core.ui.modifier.thenIf
+import plus.vplan.app.core.ui.theme.ColorToken
 import plus.vplan.app.core.ui.theme.CustomColor
 import plus.vplan.app.core.ui.theme.colors
+import plus.vplan.app.core.ui.theme.customColors
 import plus.vplan.app.core.ui.theme.displayFontFamily
 import plus.vplan.app.core.ui.theme.getGroup
 import plus.vplan.app.core.ui.theme.monospaceFontFamily
+import plus.vplan.app.core.ui.util.roundToPx
 import plus.vplan.app.core.ui.util.toDp
 import plus.vplan.app.core.utils.date.atStartOfWeek
 import plus.vplan.app.core.utils.date.inWholeMinutes
+import plus.vplan.app.core.utils.date.longMonthNames
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.core.utils.date.plus
 import plus.vplan.app.core.utils.date.shortDayOfWeekNames
@@ -131,6 +156,9 @@ import plus.vplan.app.feature.calendar.page.domain.model.DisplayType
 import plus.vplan.app.feature.calendar.page.ui.components.DisplaySelectType
 import plus.vplan.app.feature.calendar.page.ui.components.Handle
 import plus.vplan.app.feature.calendar.page.ui.components.date_selector.weekHeightDefault
+import plus.vplan.app.feature.calendar.page.ui.components.day_details.Title
+import plus.vplan.app.feature.calendar.page.ui.components.day_details.homework.TaskRow
+import plus.vplan.app.feature.calendar.page.ui.components.day_details.info.Info
 import plus.vplan.app.feature.calendar.view.domain.model.LessonRendering
 import plus.vplan.app.feature.calendar.view.ui.CalendarView
 import plus.vplan.app.feature.calendar.view.ui.CalendarViewLessons
@@ -141,7 +169,9 @@ import plus.vplan.app.feature.calendar.view.ui.components.HomeworkCard
 import plus.vplan.app.feature.calendar.view.ui.components.LessonCard
 import plus.vplan.app.feature.homework.create.ui.NewHomeworkDrawer
 import plus.vplan.app.feature.homework.detail.ui.HomeworkDetailDrawer
+import kotlin.math.absoluteValue
 import kotlin.math.floor
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 
 private const val WEEK_PAGER_SIZE = 100
@@ -180,25 +210,51 @@ private fun CalendarScreenContent(
 
     var lastCalendarDateSwitchInteractionSource by remember { mutableStateOf<CalendarDateSwitchInteractionSource?>(null) }
 
+    /**
+     * The default height of the date selector bar
+     */
     val dateSelectorBarDefaultHeight = 64.dp
-    val dateSelectorDragAreaHeight = 32.dp
-    val dragToShowDayDetailsMinimumThreshold = 64.dp
 
+    /**
+     * Spacing below the week pager for the drag handle
+     */
+    val dateSelectorDragAreaHeight = 32.dp
+
+    /**
+     * The amount that needs to be dragged until the first item in day details gets revealed.
+     */
+    val dragToShowDayDetailsMinimumThreshold = 128.dp
+
+    /**
+     * Whether the user is actually dragging the date selector bar vertically
+     */
     var isDragging by remember { mutableStateOf(false) }
+
+    /**
+     * How many px the user has dragged the date selector bar vertically
+     */
     val userDragDistance = remember { Animatable(0f) }
+
     var dateSelectorWrapperWidth by remember { mutableStateOf<Dp?>(null) }
 
     val resultingHeadHeight = WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding() +
             dateSelectorBarDefaultHeight +
             dateSelectorDragAreaHeight +
-            (userDragDistance.value.toDp() / 3)
+            (userDragDistance.value.toDp() / 6)
 
     val isMinimumDayDetailsThresholdReached = userDragDistance.value.toDp() >= dragToShowDayDetailsMinimumThreshold
+    val isMinimumDayDetailsThresholdTargeted = userDragDistance.targetValue.toDp() >= dragToShowDayDetailsMinimumThreshold
 
     LaunchedEffect(isMinimumDayDetailsThresholdReached) {
-        if (isMinimumDayDetailsThresholdReached) localHapticFeedback.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate)
+        if (!isMinimumDayDetailsThresholdReached) return@LaunchedEffect
+        if (!isDragging) return@LaunchedEffect
+
+        localHapticFeedback.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate)
     }
 
+    val weekPagerState = rememberPagerState(
+        initialPage = WEEK_PAGER_SIZE / 2
+    ) { WEEK_PAGER_SIZE }
     Box(Modifier.fillMaxSize()) {
         Box(
             modifier = Modifier
@@ -219,13 +275,12 @@ private fun CalendarScreenContent(
                         onDragStart = {
                             isDragging = true
                             scope.launch { userDragDistance.stop() }
-                            localHapticFeedback.performHapticFeedback(HapticFeedbackType.ContextClick)
                         },
                         onDragEnd = {
                             isDragging = false
                             scope.launch {
                                 userDragDistance.animateTo(
-                                    targetValue = if (isMinimumDayDetailsThresholdReached) dragToShowDayDetailsMinimumThreshold.toPx() else 0f,
+                                    targetValue = if (userDragDistance.value >= dragToShowDayDetailsMinimumThreshold.toPx()) dragToShowDayDetailsMinimumThreshold.toPx() else 0f,
                                     animationSpec = spring(
                                         dampingRatio = Spring.DampingRatioLowBouncy,
                                         stiffness = Spring.StiffnessLow
@@ -248,24 +303,21 @@ private fun CalendarScreenContent(
                 }
         ) dateSelectorWrapper@{
 
-            val pagerState = rememberPagerState(
-                initialPage = WEEK_PAGER_SIZE / 2
-            ) { WEEK_PAGER_SIZE }
 
-            LaunchedEffect(pagerState.targetPage) {
+            LaunchedEffect(weekPagerState.targetPage) {
                 if (lastCalendarDateSwitchInteractionSource != CalendarDateSwitchInteractionSource.WeekSelector) return@LaunchedEffect
                 localHapticFeedback.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate)
-                val targetSelectedDate = LocalDate.now() + ((pagerState.targetPage - WEEK_PAGER_SIZE / 2).toLong() * 7).days
+                val targetSelectedDate = LocalDate.now() + ((weekPagerState.targetPage - WEEK_PAGER_SIZE / 2).toLong() * 7).days
                 onEvent(CalendarEvent.SelectDate(targetSelectedDate))
             }
 
             LaunchedEffect(state.selectedDate) {
                 val targetPage = floor((state.selectedDate.toEpochDays() - LocalDate.now().toEpochDays()) / 7 + WEEK_PAGER_SIZE / 2f).toInt()
-                if (targetPage == pagerState.targetPage) return@LaunchedEffect
-                pagerState.animateScrollToPage(targetPage)
+                if (targetPage == weekPagerState.targetPage) return@LaunchedEffect
+                weekPagerState.animateScrollToPage(targetPage)
             }
 
-            val isDraggingWeekPager by pagerState.interactionSource.collectIsDraggedAsState()
+            val isDraggingWeekPager by weekPagerState.interactionSource.collectIsDraggedAsState()
             LaunchedEffect(isDraggingWeekPager) {
                 if (isDraggingWeekPager) lastCalendarDateSwitchInteractionSource = CalendarDateSwitchInteractionSource.WeekSelector
             }
@@ -277,7 +329,7 @@ private fun CalendarScreenContent(
                     .height(
                         48.dp + (userDragDistance.value.toDp() / 3).coerceAtMost(12.dp)
                     ),
-                state = pagerState,
+                state = weekPagerState,
                 beyondViewportPageCount = 2,
                 snapPosition = SnapPosition.Center,
                 pageSize = dateSelectorWrapperWidth?.let { PageSize.Fixed( it - 64.dp) } ?: PageSize.Fill
@@ -291,12 +343,14 @@ private fun CalendarScreenContent(
                 ) {
                     repeat(7) {
                         val date = week + it.days
+                        val day = state.calendarDays[date] ?: CalendarDay(date)
+
                         plus.vplan.app.feature.calendar.page.ui.components.Day(
                             modifier = Modifier.fillMaxHeight(),
                             isSelected = state.selectedDate == date,
                             date = date,
-                            isGrayedOut = page != pagerState.targetPage,
-                            isHoliday = false,
+                            isGrayedOut = page != weekPagerState.targetPage,
+                            isHoliday = day.dayType == Day.DayType.WEEKEND || day.dayType == Day.DayType.HOLIDAY,
                             onClick = { onEvent(CalendarEvent.SelectDate(date)) }
                         )
                     }
@@ -306,40 +360,44 @@ private fun CalendarScreenContent(
             Handle(isDragging = isDragging)
         }
 
-        val contentPagerState = rememberPagerState(CONTENT_PAGER_SIZE / 2) { CONTENT_PAGER_SIZE }
+        val calendarPagerState = rememberPagerState(CONTENT_PAGER_SIZE / 2) { CONTENT_PAGER_SIZE }
 
-        LaunchedEffect(contentPagerState.targetPage) {
-            if (lastCalendarDateSwitchInteractionSource != CalendarDateSwitchInteractionSource.ContentPager) return@LaunchedEffect
+        LaunchedEffect(calendarPagerState.targetPage) {
+            if (lastCalendarDateSwitchInteractionSource != CalendarDateSwitchInteractionSource.CalendarPager) return@LaunchedEffect
             localHapticFeedback.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate)
-            val targetSelectedDate = LocalDate.now() + (contentPagerState.targetPage - CONTENT_PAGER_SIZE / 2).toLong().days
+            val targetSelectedDate = LocalDate.now() + (calendarPagerState.targetPage - CONTENT_PAGER_SIZE / 2).toLong().days
             onEvent(CalendarEvent.SelectDate(targetSelectedDate))
         }
 
         LaunchedEffect(state.selectedDate) {
             val targetPage = floor(state.selectedDate.toEpochDays() - LocalDate.now().toEpochDays() + CONTENT_PAGER_SIZE / 2f).toInt()
-            if (targetPage == contentPagerState.targetPage) return@LaunchedEffect
-            contentPagerState.animateScrollToPage(targetPage)
+            if (targetPage == calendarPagerState.targetPage) return@LaunchedEffect
+            calendarPagerState.animateScrollToPage(targetPage)
         }
 
-        val isDraggingContentPager by contentPagerState.interactionSource.collectIsDraggedAsState()
+        val isDraggingContentPager by calendarPagerState.interactionSource.collectIsDraggedAsState()
         LaunchedEffect(isDraggingContentPager) {
-            if (isDraggingContentPager) lastCalendarDateSwitchInteractionSource = CalendarDateSwitchInteractionSource.ContentPager
+            if (isDraggingContentPager) lastCalendarDateSwitchInteractionSource = CalendarDateSwitchInteractionSource.CalendarPager
+        }
+
+        LaunchedEffect(calendarPagerState.currentPageOffsetFraction) {
+            if (!isDraggingContentPager) return@LaunchedEffect
         }
 
         val contentScrollState = rememberScrollState()
 
         val minute = 1.5.dp
         val distanceToStart = minute * state.start.inWholeMinutes()
-        val rawProgress = (userDragDistance.value.toDp() / dragToShowDayDetailsMinimumThreshold)
+        val rawProgressToDayDetailsMinimumThreshold = (userDragDistance.value.toDp() / dragToShowDayDetailsMinimumThreshold)
             .coerceIn(0f, 1f)
 
-        val easedProgress = rawProgress * rawProgress
+        val easedProgress = rawProgressToDayDetailsMinimumThreshold * rawProgressToDayDetailsMinimumThreshold
 
         val contentBlurRadius = (easedProgress * 48).dp
 
         Box(
             modifier = Modifier
-                .zIndex(99f)
+                .zIndex(98f)
                 .blur(
                     radius = contentBlurRadius,
                     edgeTreatment = BlurredEdgeTreatment.Unbounded
@@ -364,7 +422,7 @@ private fun CalendarScreenContent(
                         .offset {
                             IntOffset(
                                 x = 0,
-                                y = with(density) { (minute * (it * 60) + contentTopPadding).roundToPx() }
+                                y = (minute * (it * 60) + contentTopPadding).roundToPx()
                             )
                         }
                         .drawBehind {
@@ -402,7 +460,7 @@ private fun CalendarScreenContent(
 
             HorizontalPager(
                 modifier = Modifier.fillMaxSize(),
-                state = contentPagerState,
+                state = calendarPagerState,
                 pageSize = PageSize.Fill,
                 beyondViewportPageCount = 1,
             ) { page ->
@@ -452,7 +510,310 @@ private fun CalendarScreenContent(
                 }
             }
         }
+
+        val dayDetailPager = rememberPagerState(CONTENT_PAGER_SIZE / 2) { CONTENT_PAGER_SIZE }
+        if (userDragDistance.value > 0f) {
+            Box(
+                modifier = Modifier
+                    .zIndex(99f)
+                    .alpha(rawProgressToDayDetailsMinimumThreshold)
+                    .padding(
+                        top = resultingHeadHeight,
+                        bottom = paddingValues.calculateBottomPadding()
+                    )
+                    .background(MaterialTheme.colorScheme.surfaceContainerLowest.transparent(.4f))
+                    .fillMaxSize()
+                    .noRippleClickable { scope.launch { userDragDistance.animateTo(0f) } }
+            ) {
+                LaunchedEffect(dayDetailPager.targetPage) {
+                    if (lastCalendarDateSwitchInteractionSource != CalendarDateSwitchInteractionSource.DayDetailPager) return@LaunchedEffect
+                    localHapticFeedback.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate)
+                    val targetSelectedDate = LocalDate.now() + (dayDetailPager.targetPage - CONTENT_PAGER_SIZE / 2).toLong().days
+                    onEvent(CalendarEvent.SelectDate(targetSelectedDate))
+                }
+
+                LaunchedEffect(state.selectedDate) {
+                    val targetPage = floor(state.selectedDate.toEpochDays() - LocalDate.now().toEpochDays() + CONTENT_PAGER_SIZE / 2f).toInt()
+                    if (targetPage == dayDetailPager.targetPage) return@LaunchedEffect
+                    dayDetailPager.animateScrollToPage(targetPage)
+                }
+
+                val isDraggingDayDetailPager by dayDetailPager.interactionSource.collectIsDraggedAsState()
+                LaunchedEffect(isDraggingDayDetailPager) {
+                    if (isDraggingDayDetailPager) lastCalendarDateSwitchInteractionSource = CalendarDateSwitchInteractionSource.DayDetailPager
+                }
+
+                Column(Modifier.fillMaxSize()) {
+                    val scale by animateFloatAsState(
+                        targetValue = if (!isDragging) 1f else .9f,
+                    )
+                    AnimatedVisibility(
+                        visible = userDragDistance.targetValue.toDp() >= dragToShowDayDetailsMinimumThreshold,
+                        enter = fadeIn(),
+                        exit = fadeOut(),
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .scale(scale)
+                                .padding(top = 24.dp)
+                                .padding(horizontal = 16.dp)
+                                .alpha(1-(dayDetailPager.currentPageOffsetFraction.absoluteValue * 2))
+                        ) {
+                            Title(
+                                icon = null,
+                                title = LocalDate.now() untilText state.selectedDate,
+                            )
+                            Text(
+                                text = state.selectedDate.format(LocalDate.Format {
+                                    dayOfWeek(shortDayOfWeekNames)
+                                    chars(", ")
+                                    day(Padding.NONE)
+                                    chars(". ")
+                                    monthName(longMonthNames)
+                                    char(' ')
+                                    year()
+                                }),
+                                modifier = Modifier.padding(horizontal = 8.dp),
+                                style = MaterialTheme.typography.headlineMedium,
+                                fontFamily = displayFontFamily()
+                            )
+                        }
+                    }
+
+                    val pixelMovement = -4.dp.roundToPx()
+                    val defaultEnterAnimation = fadeIn() + scaleIn(initialScale = .9f) + slideInVertically(tween(easing = LinearOutSlowInEasing)) { pixelMovement }
+                    val defaultExitAnimation = fadeOut() + scaleOut(targetScale = .9f) + slideOutVertically(tween(easing = LinearOutSlowInEasing)) { pixelMovement }
+
+                    HorizontalPager(
+                        state = dayDetailPager,
+                        pageSize = PageSize.Fill,
+                        beyondViewportPageCount = 1,
+                        modifier = Modifier.fillMaxSize()
+                    ) { page ->
+                        val date = LocalDate.now().plus((page - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY)
+                        val day = state.calendarDays[date] ?: CalendarDay(date)
+
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState())
+                        ) {
+                            var index = 0
+                            var visibleIndex by remember { mutableStateOf(-1) }
+
+                            if (day.info != null) {
+                                AnimatedVisibility(
+                                    visible = visibleIndex >= index,
+                                    enter = defaultEnterAnimation,
+                                    exit = defaultExitAnimation,
+                                ) {
+                                    Info(
+                                        modifier = Modifier
+                                            .padding(top = 24.dp)
+                                            .padding(horizontal = 16.dp)
+                                            .scale(scale)
+                                            .fillMaxWidth(),
+                                        info = day.info
+                                    )
+                                }
+
+                                index++
+                            }
+
+                            if (day.assessments.isNotEmpty()) AnimatedVisibility(
+                                visible = visibleIndex >= index,
+                                enter = defaultEnterAnimation,
+                                exit = defaultExitAnimation,
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .padding(top = 24.dp)
+                                        .padding(horizontal = 12.dp)
+                                        .scale(scale)
+                                        .fillMaxWidth()
+                                ) {
+                                    Title(
+                                        modifier = Modifier.padding(horizontal = 4.dp),
+                                        icon = painterResource(CoreUiRes.drawable.pencil),
+                                        title = "Leistungen"
+                                    )
+                                    day.assessments.forEach { assessment ->
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .heightIn(min = 32.dp)
+                                                .clip(RoundedCornerShape(8.dp))
+                                                .clickable { displayAssessmentId = assessment.id }
+                                                .padding(8.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            SubjectIcon(
+                                                modifier = Modifier.size(24.dp),
+                                                subject = assessment.subjectInstance.subject
+                                            )
+                                            Text(
+                                                text = buildString {
+                                                    append(assessment.subjectInstance.subject)
+                                                    append(" ")
+                                                    append(assessment.type.toName())
+                                                },
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = FontWeight.Bold,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                            Text(
+                                                text = assessment.description.replace("\n", " "),
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.outline,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                        }
+                                    }
+                                }
+
+                                index++
+                            }
+
+                            if (day.homework.isNotEmpty()) AnimatedVisibility(
+                                visible = visibleIndex >= index,
+                                enter = defaultEnterAnimation,
+                                exit = defaultExitAnimation,
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .padding(top = 24.dp)
+                                        .padding(horizontal = 12.dp)
+                                        .scale(scale)
+                                        .fillMaxWidth()
+                                ) {
+                                    Title(
+                                        icon = painterResource(CoreUiRes.drawable.book_open),
+                                        title = "Hausaufgaben"
+                                    )
+                                    day.homework.forEach { homework ->
+                                        Column(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .heightIn(min = 32.dp)
+                                                .clip(RoundedCornerShape(8.dp))
+                                                .clickable { displayHomeworkId = homework.id }
+                                                .padding(8.dp),
+                                        ) {
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                            ) {
+                                                SubjectIcon(
+                                                    modifier = Modifier.size(24.dp),
+                                                    subject = homework.subjectInstance?.subject
+                                                )
+                                                Text(
+                                                    text = buildString {
+                                                        append(homework.subjectInstance?.subject ?: homework.group?.name ?: "?")
+                                                    },
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    fontWeight = FontWeight.Bold,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
+                                                )
+
+                                                if (homework.tasks.size == 1) {
+                                                    TaskRow(
+                                                        modifier = Modifier.weight(1f),
+                                                        currentProfile = state.currentProfile,
+                                                        task = homework.tasks.first(),
+                                                        isInline = true
+                                                    )
+                                                } else Spacer(Modifier.weight(1f))
+
+                                                val status = remember(homework.tasks) {
+                                                    if (state.currentProfile !is Profile.StudentProfile) return@remember null
+                                                    val tasksUndone = homework.tasks.any { !it.isDone(state.currentProfile) }
+                                                    if (!tasksUndone) HomeworkStatus.DONE
+                                                    if (Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date > homework.dueTo) HomeworkStatus.OVERDUE
+                                                    else HomeworkStatus.PENDING
+                                                }
+                                                if (status != null) when (status) {
+                                                    HomeworkStatus.DONE -> Badge(
+                                                        color = customColors[ColorToken.Green]!!.get(),
+                                                        text = "Erledigt"
+                                                    )
+
+                                                    HomeworkStatus.PENDING -> Badge(
+                                                        color = MaterialTheme.colorScheme.outline,
+                                                        text = "Ausstehend"
+                                                    )
+
+                                                    HomeworkStatus.OVERDUE -> Badge(
+                                                        color = MaterialTheme.colorScheme.error,
+                                                        text = "Überfällig"
+                                                    )
+                                                }
+                                            }
+                                            if (homework.tasks.size > 1) Column(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(start = 32.dp)
+                                            ) {
+                                                homework.tasks.forEach { task ->
+                                                    TaskRow(
+                                                        modifier = Modifier.fillMaxWidth(),
+                                                        currentProfile = state.currentProfile,
+                                                        task = task,
+                                                        isInline = false
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                index++
+                            }
+
+                            LaunchedEffect(isMinimumDayDetailsThresholdTargeted) {
+                                if (!isMinimumDayDetailsThresholdTargeted) {
+                                    visibleIndex = -1
+                                    return@LaunchedEffect
+                                }
+
+                                scope.launch {
+                                    repeat(index + 1) {
+                                        visibleIndex++
+                                        delay(50)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+            }
+        }
+
+        LaunchedEffect(dayDetailPager.currentPageOffsetFraction) {
+            if (lastCalendarDateSwitchInteractionSource != CalendarDateSwitchInteractionSource.DayDetailPager) return@LaunchedEffect
+            calendarPagerState.scrollToPage(dayDetailPager.currentPage, dayDetailPager.currentPageOffsetFraction)
+        }
     }
+
+    displayAssessmentId?.let { AssessmentDetailDrawer(
+        assessmentId = it,
+        onDismiss = { displayAssessmentId = null }
+    ) }
+
+    displayHomeworkId?.let { HomeworkDetailDrawer(
+        homeworkId = it,
+        onDismiss = { displayHomeworkId = null }
+    ) }
+
+    if (isNewAssessmentDrawerOpen) NewAssessmentDrawer(selectedDate = state.selectedDate) { isNewAssessmentDrawerOpen = false }
+    if (isNewHomeworkDrawerOpen) NewHomeworkDrawer(selectedDate = state.selectedDate) { isNewHomeworkDrawerOpen = false }
 
     return
 
@@ -821,21 +1182,8 @@ private fun CalendarScreenContent(
         fabPosition = multiFabFabPosition,
         onDismiss = { isMultiFabExpanded = false }
     )
-
-    displayAssessmentId?.let { AssessmentDetailDrawer(
-        assessmentId = it,
-        onDismiss = { displayAssessmentId = null }
-    ) }
-
-    displayHomeworkId?.let { HomeworkDetailDrawer(
-        homeworkId = it,
-        onDismiss = { displayHomeworkId = null }
-    ) }
-
-    if (isNewAssessmentDrawerOpen) NewAssessmentDrawer(selectedDate = state.selectedDate) { isNewAssessmentDrawerOpen = false }
-    if (isNewHomeworkDrawerOpen) NewHomeworkDrawer(selectedDate = state.selectedDate) { isNewHomeworkDrawerOpen = false }
 }
 
 enum class CalendarDateSwitchInteractionSource {
-    ContentPager, WeekSelector
+    CalendarPager, WeekSelector, DayDetailPager
 }
