@@ -5,7 +5,6 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -22,7 +21,8 @@ import androidx.compose.ui.unit.dp
 import plus.vplan.app.core.ui.theme.AppTheme
 
 @Composable
-fun BoxScope.Handle(
+fun Handle(
+    modifier: Modifier = Modifier,
     isDragging: Boolean
 ) {
     val width by animateDpAsState(
@@ -40,14 +40,19 @@ fun BoxScope.Handle(
         )
     )
     Box(
-        modifier = Modifier
-            .align(Alignment.BottomCenter)
-            .padding(bottom = 8.dp)
-            .height(height)
-            .width(width)
-            .clip(RoundedCornerShape(50))
-            .background(MaterialTheme.colorScheme.primary)
-    )
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .height(height)
+                .width(width)
+                .clip(RoundedCornerShape(50))
+                .background(MaterialTheme.colorScheme.primary)
+        )
+    }
 }
 
 @Composable

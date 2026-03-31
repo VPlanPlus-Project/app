@@ -10,6 +10,10 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.koin.core.context.loadKoinModules
 import org.koin.dsl.module
+import platform.UIKit.UIBarMetricsDefault
+import platform.UIKit.UIImage
+import platform.UIKit.UINavigationController
+import platform.UIKit.UIRectEdgeAll
 import platform.UIKit.UIViewController
 import plus.vplan.app.core.data.file.OpenQuicklook
 import plus.vplan.app.feature.onboarding.IosDevInfoSheetHandler
@@ -44,13 +48,27 @@ fun mainViewController(
     updateTaskFromUrl(url)
     updateTaskFromNotification(notificationTask)
 
-    mainViewController = ComposeUIViewController { App(task = task) }
+    val composeVC = ComposeUIViewController { App(task = task) }
+    mainViewController = composeVC
+
+    val navController = UINavigationController(rootViewController = composeVC).apply {
+        navigationBar.setBackgroundImage(
+            UIImage(),
+            forBarMetrics = UIBarMetricsDefault
+        )
+        navigationBar.shadowImage = UIImage()
+        navigationBar.translucent = true
+
+        composeVC.edgesForExtendedLayout = UIRectEdgeAll
+        composeVC.extendedLayoutIncludesOpaqueBars = true
+    }
 
     loadKoinModules(module {
-        single<UIViewController> { mainViewController }
+        single<UIViewController> { composeVC }
     })
 
-    return mainViewController
+    return navController
+
 }
 
 @Suppress("unused") // Is called in SwiftUI

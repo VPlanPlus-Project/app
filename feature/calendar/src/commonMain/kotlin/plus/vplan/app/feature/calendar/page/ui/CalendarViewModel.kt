@@ -34,6 +34,8 @@ import plus.vplan.app.core.model.Homework
 import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Week
+import plus.vplan.app.core.model.application.AppPlatform
+import plus.vplan.app.core.platform.PlatformRepository
 import plus.vplan.app.core.utils.date.atStartOfMonth
 import plus.vplan.app.core.utils.date.atStartOfWeek
 import plus.vplan.app.core.utils.date.inWholeMinutes
@@ -51,6 +53,7 @@ import plus.vplan.app.feature.calendar.view.domain.model.LessonRendering
 import kotlin.time.Duration.Companion.days
 
 class CalendarViewModel(
+    platformRepository: PlatformRepository,
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
     private val getCurrentDateTimeUseCase: GetCurrentDateTimeUseCase,
     private val getDayUseCase: GetDayUseCase,
@@ -62,7 +65,9 @@ class CalendarViewModel(
     private val downloadDayIfNecessaryUseCase: DownloadDayIfNecessaryUseCase,
 ) : ViewModel() {
     val state: StateFlow<CalendarState>
-        field = MutableStateFlow(CalendarState())
+        field = MutableStateFlow(CalendarState(
+            platform = platformRepository.getPlatform()
+        ))
 
     private var dayJobs: Map<LocalDate, Job> = emptyMap()
 
@@ -220,6 +225,7 @@ class CalendarViewModel(
 }
 
 data class CalendarState(
+    val platform: AppPlatform,
     val selectedDate: LocalDate = LocalDate.now(),
     val currentProfile: Profile? = null,
     val currentTime: LocalDateTime = LocalDateTime.now(),

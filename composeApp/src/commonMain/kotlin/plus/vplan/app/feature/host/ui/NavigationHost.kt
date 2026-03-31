@@ -14,6 +14,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -32,6 +33,7 @@ import plus.vplan.app.core.data.vpp_id.VppIdRepository
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.VppId
+import plus.vplan.app.core.ui.util.getNativeNavigationBarHeight
 import plus.vplan.app.core.ui.util.openUrl
 import plus.vplan.app.domain.usecase.SetCurrentProfileUseCase
 import plus.vplan.app.feature.grades.common.domain.usecase.LockGradesUseCase
@@ -51,7 +53,8 @@ fun NavigationHost(task: StartTask?) {
 
     val localLayoutDirection = LocalLayoutDirection.current
 
-    val top = WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding()
+    val top = (WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding() - getNativeNavigationBarHeight())
+        .coerceAtLeast(0.dp)
     val left = WindowInsets.safeDrawing.asPaddingValues().calculateLeftPadding(localLayoutDirection)
     val right = WindowInsets.safeDrawing.asPaddingValues().calculateRightPadding(localLayoutDirection)
     val bottom by animateDpAsState(WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding())

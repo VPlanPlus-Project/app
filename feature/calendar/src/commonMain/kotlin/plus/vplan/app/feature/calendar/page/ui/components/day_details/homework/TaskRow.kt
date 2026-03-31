@@ -42,8 +42,8 @@ fun TaskRow(
                 painter = painterResource(CoreUiRes.drawable.check),
                 contentDescription = null,
                 modifier = Modifier
-                    .padding(end = 4.dp, top = 4.dp)
-                    .size(taskFont.lineHeight.toDp() - 4.dp)
+                    .padding(end = 4.dp)
+                    .size(taskFont.lineHeight.toDp())
                     .clip(CircleShape)
                     .background(colorFamily.color)
                     .padding(2.dp),
