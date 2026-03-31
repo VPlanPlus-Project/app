@@ -89,6 +89,7 @@ fun CalendarView(
     limitTimeSpanToLessonsLowerBound: LocalTime? = null,
     info: String?,
     contentScrollState: ScrollState? = rememberScrollState(),
+    showTimeIndicator: Boolean = true,
     onHomeworkClicked: (homeworkId: Int) -> Unit,
     onAssessmentClicked: (assessmentId: Int) -> Unit,
 ) {
