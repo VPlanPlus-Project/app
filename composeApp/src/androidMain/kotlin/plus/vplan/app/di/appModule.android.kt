@@ -1,6 +1,7 @@
 package plus.vplan.app.di
 
 import dev.icerock.moko.permissions.PermissionsController
+import dev.icerock.moko.permissions.PermissionsControllerImpl
 import org.koin.core.module.Module
 import org.koin.dsl.module
 import plus.vplan.app.core.data.file.FileOpener
@@ -24,8 +25,9 @@ actual val platformModule: Module = module(createdAtStart = true) {
     single<AuthenticationRepository> { AuthenticationRepositoryImpl(get()) }
     single<OpenBiometricSettings> { OpenBiometricSettingsImpl(get()) }
     single<BiometricAuthentication> { BiometricAuthenticationImpl() }
-    single<ActivityProvider> { getProperty<ActivityProvider>("activity_provider") }
-    factory<PermissionRepository> { (controller: PermissionsController) -> PermissionRepositoryImpl(controller) }
+    single<ActivityProvider> { getProperty("activity_provider") }
+    single<PermissionsController> { PermissionsControllerImpl(get()) }
+    single<PermissionRepository> { PermissionRepositoryImpl(get()) }
     single<PlatformRepository> { PlatformRepositoryImpl() }
 
     // New file infrastructure

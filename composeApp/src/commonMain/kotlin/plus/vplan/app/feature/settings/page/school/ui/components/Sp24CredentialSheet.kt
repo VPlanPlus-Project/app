@@ -16,8 +16,11 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.unit.dp
@@ -111,16 +114,17 @@ private fun Sp24CredentialSheetContent(
             areCredentialsInvalid = state.state == SchoolSettingsCredentialsState.Invalid,
             onUsernameChanged = { onEvent(Sp24CredentialEvent.SetUsername(it)) },
             onFocusPassword = { passwordFocusRequester.requestFocus() },
-            hideBottomLine = false
         )
         Spacer(Modifier.height(8.dp))
+        var passwordVisible by remember { mutableStateOf(false) }
         PasswordField(
             password = state.password,
             passwordFocusRequester = passwordFocusRequester,
             areCredentialsInvalid = state.state == SchoolSettingsCredentialsState.Invalid,
             onPasswordChanged = { onEvent(Sp24CredentialEvent.SetPassword(it)) },
             onCheckCredentials = {},
-            hideBottomLine = false
+            passwordVisible = passwordVisible,
+            onTogglePasswordVisible = { passwordVisible = it }
         )
         Spacer(Modifier.height(8.dp))
         Button(

@@ -36,7 +36,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.ui.CoreUiRes
-import plus.vplan.app.core.ui.util.paddingvalues.plus
+import plus.vplan.app.core.utils.ui.plus
 
 @Composable
 actual fun ModalBottomSheet(
