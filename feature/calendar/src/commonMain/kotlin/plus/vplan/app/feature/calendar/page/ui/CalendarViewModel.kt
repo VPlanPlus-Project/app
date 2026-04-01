@@ -42,12 +42,9 @@ import plus.vplan.app.core.utils.date.inWholeMinutes
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.core.utils.date.plus
 import plus.vplan.app.feature.calendar.page.domain.model.DateSelectorDay
-import plus.vplan.app.feature.calendar.page.domain.model.DisplayType
 import plus.vplan.app.feature.calendar.page.domain.usecase.DownloadDayIfNecessaryUseCase
 import plus.vplan.app.feature.calendar.page.domain.usecase.GetFirstLessonStartUseCase
 import plus.vplan.app.feature.calendar.page.domain.usecase.GetHolidaysUseCase
-import plus.vplan.app.feature.calendar.page.domain.usecase.GetLastDisplayTypeUseCase
-import plus.vplan.app.feature.calendar.page.domain.usecase.SetLastDisplayTypeUseCase
 import plus.vplan.app.feature.calendar.view.domain.model.LessonLayoutingInfo
 import plus.vplan.app.feature.calendar.view.domain.model.LessonRendering
 import kotlin.time.Duration.Companion.days
@@ -57,8 +54,6 @@ class CalendarViewModel(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
     private val getCurrentDateTimeUseCase: GetCurrentDateTimeUseCase,
     private val getDayUseCase: GetDayUseCase,
-    private val getLastDisplayTypeUseCase: GetLastDisplayTypeUseCase,
-    private val setLastDisplayTypeUseCase: SetLastDisplayTypeUseCase,
     private val getFirstLessonStartUseCase: GetFirstLessonStartUseCase,
     private val getHolidaysUseCase: GetHolidaysUseCase,
     private val keyValueRepository: KeyValueRepository,
@@ -83,12 +78,6 @@ class CalendarViewModel(
         viewModelScope.launch(CoroutineName(this::class.qualifiedName + ".Init.DisplayType")) {
             downloadDayIfNecessaryUseCase.isRunning.collect { isRunning ->
                 state.update { it.copy(isTimetableUpdating = isRunning) }
-            }
-        }
-
-        viewModelScope.launch {
-            getLastDisplayTypeUseCase().collect { displayType ->
-                state.update { it.copy(displayType = displayType) }
             }
         }
 
@@ -156,7 +145,7 @@ class CalendarViewModel(
                             val hasMissingLessonTimes = lessons.any { it.lessonTime == null }
 
                             val lessonRendering =
-                                if (state.value.displayType == DisplayType.Agenda || hasTooManyInterpolated || hasMissingLessonTimes || forceReduced) {
+                                if (hasTooManyInterpolated || hasMissingLessonTimes || forceReduced) {
                                     LessonRendering.ListView(lessonsGrouped)
                                 } else {
                                     try {
@@ -214,12 +203,6 @@ class CalendarViewModel(
                 state.update { it.copy(selectedDate = event.date) }
                 state.value.currentProfile?.let { launchDaysForMonth(it) }
             }
-
-            is CalendarEvent.SelectDisplayType -> {
-                viewModelScope.launch(CoroutineName(this::class.qualifiedName + ".Action.SelectDisplayType")) {
-                    setLastDisplayTypeUseCase(event.displayType)
-                }
-            }
         }
     }
 }
@@ -230,7 +213,6 @@ data class CalendarState(
     val currentProfile: Profile? = null,
     val currentTime: LocalDateTime = LocalDateTime.now(),
     val uiUpdateVersion: Int = 0,
-    val displayType: DisplayType = DisplayType.Calendar,
     val start: LocalTime = LocalTime(0, 0),
     val holidays: Set<LocalDate> = emptySet(),
     val selectorDays: Map<LocalDate, DateSelectorDay> = emptyMap(),
@@ -240,7 +222,6 @@ data class CalendarState(
 
 sealed class CalendarEvent {
     data class SelectDate(val date: LocalDate) : CalendarEvent()
-    data class SelectDisplayType(val displayType: DisplayType) : CalendarEvent()
 }
 
 

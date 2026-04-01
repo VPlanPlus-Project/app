@@ -14,26 +14,20 @@ import platform.UIKit.UIMenuOptionsDisplayInline
 import platform.UIKit.navigationController
 import platform.UIKit.navigationItem
 import plus.vplan.app.core.utils.date.now
-import plus.vplan.app.feature.calendar.page.domain.model.DisplayType
 
 @Composable
 actual fun Head(
     title: String,
     subtitle: String,
-    currentDisplayType: DisplayType,
     showTodayButton: Boolean,
     onTodayClicked: () -> Unit,
     onCreateHomeworkClicked: () -> Unit,
-    onCreateAssessmentClicked: () -> Unit,
-    onShowAgenda: () -> Unit,
-    onShowCalendar: () -> Unit
+    onCreateAssessmentClicked: () -> Unit
 ) {
     val viewController = LocalUIViewController.current
 
     val onCreateHomework by rememberUpdatedState(onCreateHomeworkClicked)
     val onCreateAssessment by rememberUpdatedState(onCreateAssessmentClicked)
-    val onAgenda by rememberUpdatedState(onShowAgenda)
-    val onCalendar by rememberUpdatedState(onShowCalendar)
     val onToday by rememberUpdatedState(onTodayClicked)
 
     DisposableEffect(Unit) {
@@ -57,7 +51,7 @@ actual fun Head(
         }
     }
 
-    DisposableEffect(viewController, currentDisplayType, showTodayButton) {
+    DisposableEffect(viewController, showTodayButton) {
         val addMenu = UIMenu.menuWithTitle(
             title = "",
             image = null,
@@ -84,36 +78,7 @@ actual fun Head(
             menu = addMenu
         )
 
-        val calendarMenu = UIMenu.menuWithTitle(
-            title = "",
-            image = null,
-            identifier = null,
-            options = UIMenuOptionsDisplayInline,
-            children = listOf(
-                UIAction.actionWithTitle(
-                    title = "Agenda",
-                    image = UIImage.systemImageNamed("list.bullet"),
-                    identifier = null,
-                    handler = { _ -> onAgenda() }
-                ),
-                UIAction.actionWithTitle(
-                    title = "Kalender",
-                    image = UIImage.systemImageNamed("calendar"),
-                    identifier = null,
-                    handler = { _ -> onCalendar() }
-                )
-            )
-        )
-
-        val calendarButton = UIBarButtonItem(
-            image = when (currentDisplayType) {
-                DisplayType.Calendar -> UIImage.systemImageNamed("calendar")
-                DisplayType.Agenda -> UIImage.systemImageNamed("list.bullet")
-            },
-            menu = calendarMenu
-        )
-
-        val items = mutableListOf(addButton, calendarButton)
+        val items = mutableListOf(addButton)
 
         if (showTodayButton) {
             items.add(

@@ -22,7 +22,10 @@ class DownloadVppSchoolIdentifierUseCase(
                 .filter { it.aliases.none { alias -> alias.provider == AliasProvider.Vpp } }
 
             schoolsWithoutVppId.forEach { school ->
-                schoolRepository.getById(school.aliases.first()).first()
+                schoolRepository.getById(
+                    identifier = school.aliases.first(),
+                    forceReload = true,
+                ).first()
             }
         }
     }
