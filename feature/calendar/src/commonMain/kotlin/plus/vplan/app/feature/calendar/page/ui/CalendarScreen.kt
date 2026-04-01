@@ -147,6 +147,7 @@ import plus.vplan.app.core.ui.util.roundToPx
 import plus.vplan.app.core.ui.util.toDp
 import plus.vplan.app.core.utils.date.atStartOfWeek
 import plus.vplan.app.core.utils.date.inWholeMinutes
+import plus.vplan.app.core.utils.date.isoWeekNumber
 import plus.vplan.app.core.utils.date.longMonthNames
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.core.utils.date.plus
@@ -368,7 +369,7 @@ private fun CalendarScreenContent(
 
             Head(
                 title = "Kalender",
-                subtitle = "KW 22",
+                subtitle = "KW ${state.selectedDate.isoWeekNumber()}",
                 currentDisplayType = state.displayType,
                 showTodayButton = state.selectedDate != LocalDate.now(),
                 onTodayClicked = { onEvent(CalendarEvent.SelectDate(LocalDate.now())) },

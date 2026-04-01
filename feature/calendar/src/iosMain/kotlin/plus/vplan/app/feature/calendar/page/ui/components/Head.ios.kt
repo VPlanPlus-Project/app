@@ -50,6 +50,7 @@ actual fun Head(
     DisposableEffect(viewController, title, subtitle) {
         viewController.navigationItem.subtitle = subtitle
         viewController.navigationItem.title = title
+
         onDispose {
             viewController.navigationItem.title = null
             viewController.navigationItem.subtitle = null
