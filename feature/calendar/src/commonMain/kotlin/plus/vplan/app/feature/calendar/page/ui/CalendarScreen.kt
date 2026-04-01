@@ -5,6 +5,7 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -77,6 +78,9 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.input.pointer.util.addPointerInputChange
@@ -89,9 +93,11 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
 import androidx.compose.ui.zIndex
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
@@ -147,6 +153,9 @@ import kotlin.time.Duration.Companion.days
 
 private const val WEEK_PAGER_SIZE = 100
 private const val CONTENT_PAGER_SIZE = 800
+
+private const val MIN_FLING_VELOCITY = 400f
+private const val MAX_FLING_VELOCITY = 2000f
 
 @Composable
 fun CalendarScreen(
@@ -228,6 +237,8 @@ private fun CalendarScreenContent(
 
     var dateSelectorWrapperWidth by remember { mutableStateOf<Dp?>(null) }
 
+    val dragToShowDayDetailsMinimumThresholdPx = with(localDensity) { dragToShowDayDetailsMinimumThreshold.toPx() }
+
     val rawProgressToDayDetailsMinimumThreshold = (userDragDistance.value.toDp() / dragToShowDayDetailsMinimumThreshold)
         .coerceIn(0f, 1f)
 
@@ -279,25 +290,13 @@ private fun CalendarScreenContent(
                         onDragEnd = {
                             isDraggingSelector = false
 
-                            val minVelocity = 400f
-                            val maxVelocity = 2000f
-
-                            val progress = (userDragDistance.value / dragToShowDayDetailsMinimumThreshold.toPx())
-                                .coerceIn(0f, 1f)
-                            val requiredVelocity = maxVelocity - (progress * (maxVelocity - minVelocity))
-
-                            val isThresholdReached = progress >= 1f
-                            val isVelocityEnough = velocityTracker.calculateVelocity().y >= requiredVelocity
-
-                            scope.launch {
-                                userDragDistance.animateTo(
-                                    targetValue = if (isThresholdReached || isVelocityEnough) dragToShowDayDetailsMinimumThreshold.toPx() else 0f,
-                                    animationSpec = if (isThresholdReached) tween() else spring(
-                                        dampingRatio = Spring.DampingRatioLowBouncy,
-                                        stiffness = Spring.StiffnessLow
-                                    )
-                                )
-                            }
+                            val velocityY = velocityTracker.calculateVelocity().y
+                            settleUserDragDistance(
+                                scope = scope,
+                                userDragDistance = userDragDistance,
+                                dragThresholdPx = dragToShowDayDetailsMinimumThresholdPx,
+                                velocityY = velocityY
+                            )
                         },
                         onDragCancel = {
                             isDraggingSelector = false
@@ -431,6 +430,14 @@ private fun CalendarScreenContent(
                 )
                 .padding(bottom = paddingValues.calculateBottomPadding())
                 .fillMaxSize()
+                .nestedScroll(
+                    rememberContentNestedScrollConnection(
+                        scope = scope,
+                        userDragDistance = userDragDistance,
+                        dragThresholdPx = dragToShowDayDetailsMinimumThresholdPx,
+                        contentScrollState = contentScrollState
+                    )
+                )
                 .verticalScroll(contentScrollState)
                 .height((minute * 60 * 24 - distanceToStart).coerceAtLeast(0.dp))
         ) {
@@ -552,9 +559,16 @@ private fun CalendarScreenContent(
                         top = resultingHeadHeight,
                         bottom = paddingValues.calculateBottomPadding()
                     )
-                    .background(MaterialTheme.colorScheme.surfaceContainerLowest.transparent(.4f))
-                    .fillMaxSize()
-                    .noRippleClickable { scope.launch { userDragDistance.animateTo(0f) } }
+                     .background(MaterialTheme.colorScheme.surfaceContainerLowest.transparent(.4f))
+                     .fillMaxSize()
+                     .nestedScroll(
+                         rememberDayDetailsNestedScrollConnection(
+                             scope = scope,
+                             userDragDistance = userDragDistance,
+                             dragThresholdPx = dragToShowDayDetailsMinimumThresholdPx
+                         )
+                     )
+                     .noRippleClickable { scope.launch { userDragDistance.animateTo(0f) } }
             ) {
                 LaunchedEffect(dayDetailPager.targetPage) {
                     if (lastCalendarDateSwitchInteractionSource != CalendarDateSwitchInteractionSource.DayDetailPager) return@LaunchedEffect
@@ -944,4 +958,127 @@ private fun CalendarScreenContent(
 
 enum class CalendarDateSwitchInteractionSource {
     CalendarPager, WeekSelector, DayDetailPager
+}
+
+@Composable
+private fun rememberContentNestedScrollConnection(
+    scope: CoroutineScope,
+    userDragDistance: Animatable<Float, AnimationVector1D>,
+    dragThresholdPx: Float,
+    contentScrollState: ScrollState,
+): NestedScrollConnection {
+    return remember(scope, userDragDistance, dragThresholdPx, contentScrollState) {
+        ContentNestedScrollConnection(
+            scope = scope,
+            userDragDistance = userDragDistance,
+            dragThresholdPx = dragThresholdPx,
+            contentScrollState = contentScrollState,
+        )
+    }
+}
+
+private class ContentNestedScrollConnection(
+    private val scope: CoroutineScope,
+    private val userDragDistance: Animatable<Float, AnimationVector1D>,
+    private val dragThresholdPx: Float,
+    private val contentScrollState: ScrollState,
+) : NestedScrollConnection {
+
+    override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+        val deltaY = available.y
+
+        // Only intercept downward drags (scrolling up) when the content is already at the top
+        if (deltaY <= 0f) return Offset.Zero
+        if (contentScrollState.value > 0) return Offset.Zero
+
+        val current = userDragDistance.value
+        val newValue = (current + deltaY).coerceAtLeast(0f)
+        if (newValue == current) return Offset.Zero
+
+        scope.launch { userDragDistance.snapTo(newValue) }
+        return Offset(x = 0f, y = deltaY)
+    }
+
+    override suspend fun onPreFling(available: Velocity): Velocity {
+        // If content is at top and user flings downward, convert fling to selector expansion
+        if (available.y > 0f && contentScrollState.value == 0) {
+            settleUserDragDistance(
+                scope = scope,
+                userDragDistance = userDragDistance,
+                dragThresholdPx = dragThresholdPx,
+                velocityY = available.y,
+            )
+            return available
+        }
+        return Velocity.Zero
+    }
+}
+
+@Composable
+private fun rememberDayDetailsNestedScrollConnection(
+    scope: CoroutineScope,
+    userDragDistance: Animatable<Float, AnimationVector1D>,
+    dragThresholdPx: Float,
+): NestedScrollConnection {
+    return remember(scope, userDragDistance, dragThresholdPx) {
+        DayDetailsNestedScrollConnection(
+            scope = scope,
+            userDragDistance = userDragDistance,
+            dragThresholdPx = dragThresholdPx,
+        )
+    }
+}
+
+private class DayDetailsNestedScrollConnection(
+    private val scope: CoroutineScope,
+    private val userDragDistance: Animatable<Float, AnimationVector1D>,
+    private val dragThresholdPx: Float,
+) : NestedScrollConnection {
+
+    override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+        val deltaY = available.y
+
+        // Mirror selector drag: drag down to expand, up to collapse
+        val current = userDragDistance.value
+        val newValue = (current + deltaY).coerceAtLeast(0f)
+        if (newValue == current) return Offset.Zero
+
+        scope.launch { userDragDistance.snapTo(newValue) }
+        return Offset(x = 0f, y = deltaY)
+    }
+
+    override suspend fun onPreFling(available: Velocity): Velocity {
+        settleUserDragDistance(
+            scope = scope,
+            userDragDistance = userDragDistance,
+            dragThresholdPx = dragThresholdPx,
+            velocityY = available.y,
+        )
+        return available
+    }
+}
+
+private fun settleUserDragDistance(
+    scope: CoroutineScope,
+    userDragDistance: Animatable<Float, AnimationVector1D>,
+    dragThresholdPx: Float,
+    velocityY: Float,
+) {
+    val progress = (userDragDistance.value / dragThresholdPx).coerceIn(0f, 1f)
+    val requiredVelocity = MAX_FLING_VELOCITY - (progress * (MAX_FLING_VELOCITY - MIN_FLING_VELOCITY))
+
+    val isThresholdReached = progress >= 1f
+    val isVelocityEnough = velocityY >= requiredVelocity
+
+    val targetValue = if (isThresholdReached || isVelocityEnough) dragThresholdPx else 0f
+
+    scope.launch {
+        userDragDistance.animateTo(
+            targetValue = targetValue,
+            animationSpec = if (isThresholdReached) tween() else spring(
+                dampingRatio = Spring.DampingRatioLowBouncy,
+                stiffness = Spring.StiffnessLow
+            )
+        )
+    }
 }
