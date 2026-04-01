@@ -1,30 +1,22 @@
 package plus.vplan.app.feature.calendar.page.ui
 
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.MutatePriority
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.gestures.snapping.SnapPosition
-import androidx.compose.foundation.gestures.stopScroll
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -40,24 +32,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -89,7 +75,6 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionOnScreen
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
@@ -103,11 +88,9 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format
-import kotlinx.datetime.format.MonthNames
 import kotlinx.datetime.format.Padding
 import kotlinx.datetime.format.char
 import kotlinx.datetime.plus
-import kotlinx.datetime.until
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.assessment.detail.ui.AssessmentDetailDrawer
 import plus.vplan.app.core.model.Day
@@ -136,13 +119,11 @@ import plus.vplan.app.core.utils.ui.color.transparent
 import plus.vplan.app.feature.assessment.create.ui.NewAssessmentDrawer
 import plus.vplan.app.feature.calendar.page.ui.components.Handle
 import plus.vplan.app.feature.calendar.page.ui.components.Head
-import plus.vplan.app.feature.calendar.page.ui.components.date_selector.weekHeightDefault
 import plus.vplan.app.feature.calendar.page.ui.components.day_details.AnimatableBlock
 import plus.vplan.app.feature.calendar.page.ui.components.day_details.Title
 import plus.vplan.app.feature.calendar.page.ui.components.day_details.assessment.Assessment
 import plus.vplan.app.feature.calendar.page.ui.components.day_details.homework.Homework
 import plus.vplan.app.feature.calendar.view.domain.model.LessonRendering
-import plus.vplan.app.feature.calendar.view.ui.CalendarView
 import plus.vplan.app.feature.calendar.view.ui.CalendarViewLessons
 import plus.vplan.app.feature.calendar.view.ui.components.LessonCard
 import plus.vplan.app.feature.homework.create.ui.NewHomeworkDrawer
@@ -559,16 +540,9 @@ private fun CalendarScreenContent(
                         top = resultingHeadHeight,
                         bottom = paddingValues.calculateBottomPadding()
                     )
-                     .background(MaterialTheme.colorScheme.surfaceContainerLowest.transparent(.4f))
-                     .fillMaxSize()
-                     .nestedScroll(
-                         rememberDayDetailsNestedScrollConnection(
-                             scope = scope,
-                             userDragDistance = userDragDistance,
-                             dragThresholdPx = dragToShowDayDetailsMinimumThresholdPx
-                         )
-                     )
-                     .noRippleClickable { scope.launch { userDragDistance.animateTo(0f) } }
+                    .background(MaterialTheme.colorScheme.surfaceContainerLowest.transparent(.4f))
+                    .fillMaxSize()
+                    .noRippleClickable { scope.launch { userDragDistance.animateTo(0f) } }
             ) {
                 LaunchedEffect(dayDetailPager.targetPage) {
                     if (lastCalendarDateSwitchInteractionSource != CalendarDateSwitchInteractionSource.DayDetailPager) return@LaunchedEffect
@@ -640,10 +614,20 @@ private fun CalendarScreenContent(
                         val date = LocalDate.now().plus((page - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY)
                         val day = state.calendarDays[date] ?: CalendarDay(date)
 
+                        val dayDetailsScrollState = rememberScrollState()
+
                         Column(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .verticalScroll(rememberScrollState())
+                                .nestedScroll(
+                                    rememberDayDetailsNestedScrollConnection(
+                                        scope = scope,
+                                        userDragDistance = userDragDistance,
+                                        dragThresholdPx = dragToShowDayDetailsMinimumThresholdPx,
+                                        contentScrollState = dayDetailsScrollState,
+                                    )
+                                )
+                                .verticalScroll(dayDetailsScrollState)
                         ) {
                             var index = 0
                             var visibleIndex by remember { mutableStateOf(-1) }
@@ -781,179 +765,6 @@ private fun CalendarScreenContent(
         fabPosition = multiFabFabPosition,
         onDismiss = { isMultiFabExpanded = false }
     )
-
-    return
-
-    val pagerState = rememberPagerState(initialPage = (CONTENT_PAGER_SIZE / 2) + LocalDate.now().until(state.selectedDate, DateTimeUnit.DAY).toInt()) { CONTENT_PAGER_SIZE }
-    val lazyListState = rememberLazyListState(initialFirstVisibleItemIndex = (CONTENT_PAGER_SIZE / 2) + LocalDate.now().until(state.selectedDate, DateTimeUnit.DAY).toInt())
-
-    Box(
-        modifier = Modifier
-            .padding(top = weekHeightDefault)
-            .padding(paddingValues)
-            .fillMaxSize()
-    ) {
-        Column(Modifier.fillMaxSize()) {
-            Column (
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Row(
-                    modifier = Modifier
-                        .padding(vertical = 4.dp, horizontal = 8.dp)
-                        .fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    Column(Modifier.padding(horizontal = 8.dp)) dateHead@{
-                        AnimatedContent(
-                            targetState = state.selectedDate
-                        ) { displayDate ->
-                            Text(
-                                text = state.currentTime.date untilText displayDate,
-                                style = MaterialTheme.typography.titleSmall
-                            )
-                        }
-                        CompositionLocalProvider(
-                            LocalTextStyle provides LocalTextStyle.current.merge(
-                                TextStyle(
-                                    fontFamily = displayFontFamily()
-                                )
-                            )
-                        ) {
-                            Row {
-                                AnimatedContent(
-                                    targetState = state.selectedDate.day,
-                                    transitionSpec = { fadeIn() togetherWith fadeOut() },
-                                    modifier = Modifier.animateContentSize()
-                                ) {
-                                    Text(
-                                        text = it.toString(),
-                                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
-                                    )
-                                }
-                                Text(
-                                    text = ". ",
-                                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
-                                )
-                                AnimatedContent(
-                                    targetState = state.selectedDate.format(LocalDate.Format {
-                                        monthName(MonthNames("Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"))
-                                    }),
-                                    transitionSpec = { fadeIn() togetherWith fadeOut() },
-                                    modifier = Modifier.animateContentSize()
-                                ) {
-                                    Text(
-                                        text = it,
-                                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
-                                    )
-                                }
-                                Text(
-                                    text = " ",
-                                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
-                                )
-                                AnimatedContent(
-                                    targetState = state.selectedDate.year,
-                                    transitionSpec = { fadeIn() togetherWith fadeOut() },
-                                    modifier = Modifier.animateContentSize()
-                                ) {
-                                    Text(
-                                        text = it.toString().drop(2),
-                                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
-                                    )
-                                }
-                            }
-                        }
-                    }
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        FilledTonalIconButton(
-                            onClick = {
-                                scope.launch {
-                                    if (pagerState.isScrollInProgress) pagerState.stopScroll(MutatePriority.PreventUserInput)
-                                    if (lazyListState.isScrollInProgress) lazyListState.stopScroll(MutatePriority.PreventUserInput)
-                                    onEvent(CalendarEvent.SelectDate(LocalDate.now()))
-                                }
-                            },
-                            enabled = state.selectedDate != LocalDate.now()
-                        ) {
-                            Icon(
-                                painter = painterResource(CoreUiRes.drawable.calendar),
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-                    }
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-            }
-            BoxWithConstraints(
-                modifier = Modifier.fillMaxSize(),
-            ) {
-                Column {
-                    AnimatedVisibility(
-                        visible = state.isTimetableUpdating,
-                        enter = expandVertically(),
-                        exit = shrinkVertically()
-                    ) {
-                        LinearProgressIndicator(Modifier.fillMaxWidth())
-                    }
-                    HorizontalDivider()
-                    val isUserDraggingPager = pagerState.interactionSource.collectIsDraggedAsState().value
-                    val isUserDraggingList = lazyListState.interactionSource.collectIsDraggedAsState().value
-                    var isScrollAnimationRunning by remember { mutableStateOf(false) }
-                    LaunchedEffect(pagerState.targetPage, isUserDraggingPager) {
-                        if (!isUserDraggingPager && isScrollAnimationRunning) return@LaunchedEffect
-                        if (isUserDraggingPager) isScrollAnimationRunning = false
-                        val date = LocalDate.now().plus((pagerState.targetPage - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY)
-                        if (date != state.selectedDate) onEvent(CalendarEvent.SelectDate(date))
-                    }
-                    LaunchedEffect(state.selectedDate) {
-                        val currentlyOpenedDate = LocalDate.now().plus((pagerState.currentPage - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY)
-                        if (currentlyOpenedDate != state.selectedDate) {
-                            val item = (CONTENT_PAGER_SIZE / 2) + LocalDate.now().until(state.selectedDate, DateTimeUnit.DAY).toInt()
-                            if (!pagerState.isScrollInProgress) {
-                                isScrollAnimationRunning = true
-                                pagerState.animateScrollToPage(item)
-                            }
-                            lazyListState.scrollToItem(item)
-                        }
-                    }
-
-                    HorizontalPager(
-                        state = pagerState,
-                        pageSize = PageSize.Fill,
-                        verticalAlignment = Alignment.Top,
-                        beyondViewportPageCount = 3,
-                        modifier = Modifier.fillMaxSize()
-                    ) { page ->
-                        val date = remember(page) { LocalDate.now().plus((page - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY) }
-                        val contentScrollState = remember(date) { contentScrollStates.getOrPut(date) { ScrollState(0) } }
-                        val day = state.calendarDays[date] ?: CalendarDay(date)
-                        val lessonsForCalendarView = CalendarViewLessons(
-                            day.lessons ?: LessonRendering.ListView(emptyMap())
-                        )
-                        CalendarView(
-                            profile = state.currentProfile,
-                            date = date,
-                            dayType = day.dayType,
-                            lessons = lessonsForCalendarView,
-                            assessments = day.assessments,
-                            homework = day.homework,
-                            bottomIslandPadding = remember { PaddingValues(end = 80.dp) },
-                            limitTimeSpanToLessonsLowerBound = state.start,
-                            info = day.info,
-                            contentScrollState = contentScrollState,
-                            onHomeworkClicked = remember { { displayHomeworkId = it } },
-                            onAssessmentClicked = remember { { displayAssessmentId = it } },
-                        )
-                    }
-                }
-            }
-        }
-    }
 }
 
 enum class CalendarDateSwitchInteractionSource {
@@ -1019,12 +830,14 @@ private fun rememberDayDetailsNestedScrollConnection(
     scope: CoroutineScope,
     userDragDistance: Animatable<Float, AnimationVector1D>,
     dragThresholdPx: Float,
+    contentScrollState: ScrollState,
 ): NestedScrollConnection {
-    return remember(scope, userDragDistance, dragThresholdPx) {
+    return remember(scope, userDragDistance, dragThresholdPx, contentScrollState) {
         DayDetailsNestedScrollConnection(
             scope = scope,
             userDragDistance = userDragDistance,
             dragThresholdPx = dragThresholdPx,
+            contentScrollState = contentScrollState,
         )
     }
 }
@@ -1033,10 +846,15 @@ private class DayDetailsNestedScrollConnection(
     private val scope: CoroutineScope,
     private val userDragDistance: Animatable<Float, AnimationVector1D>,
     private val dragThresholdPx: Float,
+    private val contentScrollState: ScrollState,
 ) : NestedScrollConnection {
 
     override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
         val deltaY = available.y
+
+        // Only intercept when the internal scroll is at the top, so we don't
+        // fight with vertical scrolling of the block content.
+        if (contentScrollState.value > 0) return Offset.Zero
 
         // Mirror selector drag: drag down to expand, up to collapse
         val current = userDragDistance.value
@@ -1048,6 +866,8 @@ private class DayDetailsNestedScrollConnection(
     }
 
     override suspend fun onPreFling(available: Velocity): Velocity {
+        if (contentScrollState.value > 0) return Velocity.Zero
+
         settleUserDragDistance(
             scope = scope,
             userDragDistance = userDragDistance,
