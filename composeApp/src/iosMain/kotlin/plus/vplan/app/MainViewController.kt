@@ -56,6 +56,7 @@ fun mainViewController(
             UIImage(),
             forBarMetrics = UIBarMetricsDefault
         )
+        navigationBar.hidden = true
         navigationBar.shadowImage = UIImage()
         navigationBar.translucent = true
 

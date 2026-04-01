@@ -11,6 +11,7 @@ import platform.UIKit.UIBarButtonItem
 import platform.UIKit.UIImage
 import platform.UIKit.UIMenu
 import platform.UIKit.UIMenuOptionsDisplayInline
+import platform.UIKit.navigationController
 import platform.UIKit.navigationItem
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.feature.calendar.page.domain.model.DisplayType
@@ -34,6 +35,16 @@ actual fun Head(
     val onAgenda by rememberUpdatedState(onShowAgenda)
     val onCalendar by rememberUpdatedState(onShowCalendar)
     val onToday by rememberUpdatedState(onTodayClicked)
+
+    DisposableEffect(Unit) {
+        val navBar = viewController.navigationController?.navigationBar ?: return@DisposableEffect onDispose {  }
+
+        navBar.hidden = false
+
+        onDispose {
+            navBar.hidden = true
+        }
+    }
 
 
     DisposableEffect(viewController, title, subtitle) {

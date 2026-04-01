@@ -54,6 +54,7 @@ import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.model.application.AppPlatform
 import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.core.ui.theme.AppTheme
+import plus.vplan.app.core.ui.util.minusNativeNavigationBarHeight
 import kotlin.math.exp
 
 val PULL_THRESHOLD = 72.dp
@@ -189,10 +190,15 @@ fun InformativePullToRefresh(
         }
 
         // Indicator Layer
-        val safeTopPadding = WindowInsets.safeContent.asPaddingValues().calculateTopPadding().let { baseTop ->
-            if (platform == AppPlatform.iOS) baseTop + 16.dp
-            else baseTop
-        }
+        val safeTopPadding = WindowInsets
+            .safeContent
+            .asPaddingValues()
+            .minusNativeNavigationBarHeight()
+            .calculateTopPadding()
+            .let { baseTop ->
+                if (platform == AppPlatform.iOS) baseTop + 16.dp
+                else baseTop
+            }
         val actualSafeTopPadding = safeTopPadding * (rawPullY.value / maxOffsetPx).coerceIn(0f, 1f)
         Box(
             modifier = Modifier

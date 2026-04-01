@@ -6,4 +6,4 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.cinterop.ExperimentalForeignApi
 
-actual fun getNativeNavigationBarHeight(): Dp = 72.dp
+actual fun getNativeNavigationBarHeight(): Dp = 44.dp

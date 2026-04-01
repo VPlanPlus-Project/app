@@ -143,7 +143,6 @@ import plus.vplan.app.core.ui.theme.displayFontFamily
 import plus.vplan.app.core.ui.theme.getGroup
 import plus.vplan.app.core.ui.theme.monospaceFontFamily
 import plus.vplan.app.core.ui.util.getNativeNavigationBarHeight
-import plus.vplan.app.core.ui.util.minusNativeNavigationBarHeight
 import plus.vplan.app.core.ui.util.roundToPx
 import plus.vplan.app.core.ui.util.toDp
 import plus.vplan.app.core.utils.date.atStartOfWeek
@@ -256,16 +255,14 @@ private fun CalendarScreenContent(
     val rawProgressToDayDetailsMinimumThreshold = (userDragDistance.value.toDp() / dragToShowDayDetailsMinimumThreshold)
         .coerceIn(0f, 1f)
 
-    val calendarHeaderHeight = if (state.platform == AppPlatform.Android) TopAppBarDefaults.TopAppBarExpandedHeight else (getNativeNavigationBarHeight() + 8.dp)
+    val calendarHeaderHeight = if (state.platform == AppPlatform.Android) TopAppBarDefaults.TopAppBarExpandedHeight else getNativeNavigationBarHeight() + 8.dp
     val currentDateSelectorHeight = dateSelectorBarDefaultHeight + rawProgressToDayDetailsMinimumThreshold * (dateSelectorMaxExpandHeight - dateSelectorBarDefaultHeight)
     val currentDateSelectorHeaderHeight = dateSelectorHeaderHeight * rawProgressToDayDetailsMinimumThreshold
 
-    val resultingHeadHeight = WindowInsets.safeDrawing.asPaddingValues()
-        .minusNativeNavigationBarHeight()
-        .calculateTopPadding() +
-            currentDateSelectorHeight +
-            dateSelectorDragAreaHeight +
-            calendarHeaderHeight
+    val resultingHeadHeight = WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding() +
+        currentDateSelectorHeight +
+        dateSelectorDragAreaHeight +
+        calendarHeaderHeight
 
     val isMinimumDayDetailsThresholdReached = userDragDistance.value.toDp() >= dragToShowDayDetailsMinimumThreshold
     val isMinimumDayDetailsThresholdTargeted = userDragDistance.targetValue.toDp() >= dragToShowDayDetailsMinimumThreshold
@@ -280,6 +277,7 @@ private fun CalendarScreenContent(
     val weekPagerState = rememberPagerState(
         initialPage = WEEK_PAGER_SIZE / 2
     ) { WEEK_PAGER_SIZE }
+
     Box(Modifier.fillMaxSize()) {
         val velocityTracker = remember { VelocityTracker() }
         Column(
@@ -385,6 +383,7 @@ private fun CalendarScreenContent(
                     .fillMaxWidth()
                     .height(currentDateSelectorHeight),
                 state = weekPagerState,
+                userScrollEnabled = !isDragging,
                 beyondViewportPageCount = 2,
                 snapPosition = SnapPosition.Center,
                 pageSize = dateSelectorWrapperWidth?.let { PageSize.Fixed( it - (isMinimumReachedAnimatedSidePadding * 64).dp) } ?: PageSize.Fill
@@ -518,6 +517,7 @@ private fun CalendarScreenContent(
 
             HorizontalPager(
                 modifier = Modifier.fillMaxSize(),
+                userScrollEnabled = !isDragging,
                 state = calendarPagerState,
                 pageSize = PageSize.Fill,
                 beyondViewportPageCount = 1,
@@ -650,6 +650,7 @@ private fun CalendarScreenContent(
                     HorizontalPager(
                         state = dayDetailPager,
                         pageSize = PageSize.Fill,
+                        userScrollEnabled = !isDragging,
                         beyondViewportPageCount = 1,
                         modifier = Modifier.fillMaxSize()
                     ) { page ->
