@@ -4,8 +4,8 @@ import org.gradle.api.Project
 val applicationConfig = ApplicationConfig(
     versionMajor = 0,
     versionMinor = 4,
-    versionPatch = 16,
-    build = 8,
+    versionPatch = 19,
+    build = 1,
     channel = ApplicationConfig.Channel.Production,
     android = ApplicationConfig.Android(
         minSdk = 24,
