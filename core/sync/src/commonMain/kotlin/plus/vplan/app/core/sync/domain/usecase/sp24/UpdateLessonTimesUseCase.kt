@@ -3,6 +3,7 @@ package plus.vplan.app.core.sync.domain.usecase.sp24
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import plus.vplan.app.core.analytics.AnalyticsRepository
 import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.data.lesson_times.LessonTimeRepository
 import plus.vplan.app.core.model.LessonTime
@@ -13,13 +14,15 @@ import plus.vplan.app.core.utils.list.isContinuous
 import plus.vplan.app.core.utils.list.lastContinuousBy
 import plus.vplan.lib.sp24.source.Authentication
 import plus.vplan.lib.sp24.source.Stundenplan24Client
+import plus.vplan.lib.sp24.source.Response as Sp24Response
 
 private const val TAG = "UpdateLessonTimesUseCase"
 private val LOGGER = Logger.withTag(TAG)
 
 class UpdateLessonTimesUseCase(
     private val groupRepository: GroupRepository,
-    private val lessonTimeRepository: LessonTimeRepository
+    private val lessonTimeRepository: LessonTimeRepository,
+    private val analyticsRepository: AnalyticsRepository,
 ) {
     suspend operator fun invoke(school: School.AppSchool, providedClient: Stundenplan24Client? = null) {
         val client = providedClient ?: Stundenplan24Client(authentication = Authentication(
@@ -27,14 +30,26 @@ class UpdateLessonTimesUseCase(
             username = school.username,
             password = school.password
         ))
-        val lessonTimes = (client.lessonTime.getLessonTime(contextSchoolWeek = null) as? plus.vplan.lib.sp24.source.Response.Success)?.data
+
+        val lessonTimesResult = client.lessonTime.getLessonTime(contextSchoolWeek = null)
+        if (lessonTimesResult !is Sp24Response.Success) {
+            val message = "Failed to download lesson time data: $lessonTimesResult"
+            LOGGER.e { message }
+            analyticsRepository.captureError(
+                location = "UpdateLessonTimesUseCase",
+                message = message
+            )
+            return
+        }
+
+        val lessonTimes = lessonTimesResult.data
 
         val groups = groupRepository.getBySchool(school).first()
         val existingLessonTimes = lessonTimeRepository.getBySchool(school)
             .map { it.filter { lessonTime -> !lessonTime.interpolated } }
 
         val downloadedLessonTimes = lessonTimes
-            ?.mapNotNull { lessonTime ->
+            .mapNotNull { lessonTime ->
                 val group = groups.firstOrNull { it.name == lessonTime.className } ?: return@mapNotNull null
                 LessonTime(
                     id = LessonTime.buildId(school.id, group.id, lessonTime.lessonNumber),
@@ -45,11 +60,6 @@ class UpdateLessonTimesUseCase(
                     interpolated = lessonTime.interpolated
                 )
             }
-
-        if (downloadedLessonTimes == null) {
-            LOGGER.e { "Downloaded lesson times are null" }
-            return
-        }
 
         existingLessonTimes.first().let { existing ->
             val downloadedLessonTimesToDelete =
