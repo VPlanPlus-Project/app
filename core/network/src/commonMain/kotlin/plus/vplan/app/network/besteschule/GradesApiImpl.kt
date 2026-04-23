@@ -31,6 +31,7 @@ class GradesApiImpl(
                         protocol = URLProtocol.HTTPS
                         host = "beste.schule"
                         pathSegments = listOf("api", "grades")
+                        parameters.append("include", "collection")
                     }
 
                     bearerAuth(access.schulverwalterAccessToken)
