@@ -86,6 +86,7 @@ import plus.vplan.app.core.model.ProfileType
 import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.getByProvider
 import plus.vplan.app.core.ui.CoreUiRes
+import plus.vplan.app.core.ui.components.InfoCard
 import plus.vplan.app.core.ui.components.InformativePullToRefresh
 import plus.vplan.app.core.ui.components.SubjectIcon
 import plus.vplan.app.core.ui.theme.AppTheme
@@ -110,7 +111,6 @@ import plus.vplan.app.feature.main.ui.MainScreen
 import plus.vplan.app.feature.news.ui.NewsDrawer
 import plus.vplan.app.feature.schulverwalter.domain.usecase.InitializeSchulverwalterReauthUseCase
 import plus.vplan.app.feature.settings.page.info.ui.components.FeedbackDrawer
-import plus.vplan.app.core.ui.components.InfoCard
 import plus.vplan.app.utils.longDayOfWeekNames
 import plus.vplan.app.utils.openUrl
 import plus.vplan.app.utils.progressIn
@@ -448,7 +448,10 @@ private fun HomeContent(
                                 if ((state.remainingLessons.values.flatten() - (if (!highlightedLessons.showCurrent) highlightedLessons.nextLesson.toSet() else emptySet())).isNotEmpty()) {
                                     Spacer(Modifier.size(8.dp))
                                     Text(
-                                        text = if (isYourDayToday) "Weitere Stunden" else "Stundenplan",
+                                        text =
+                                            if (isYourDayToday) "Weitere Stunden"
+                                            else if (state.day.substitution.isEmpty()) "Stundenplan"
+                                            else "Vertretungsplan",
                                         style = MaterialTheme.typography.titleSmall,
                                         modifier = Modifier.padding(horizontal = 16.dp)
                                     )
