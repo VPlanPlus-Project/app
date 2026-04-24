@@ -170,8 +170,6 @@ private fun CalendarScreenContent(
     var isMultiFabExpanded by rememberSaveable { mutableStateOf(false) }
     var multiFabFabPosition by remember { mutableStateOf(Offset.Zero) }
 
-    val contentScrollStates = remember { mutableMapOf<LocalDate, ScrollState>() }
-
     var lastCalendarDateSwitchInteractionSource by remember { mutableStateOf<CalendarDateSwitchInteractionSource?>(null) }
 
     /**
@@ -239,6 +237,21 @@ private fun CalendarScreenContent(
         if (!isDraggingSelector) return@LaunchedEffect
 
         localHapticFeedback.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate)
+    }
+
+    /**
+     * If the user stops scrolling the lesson view, settle the expandable drag distance.
+     */
+    LaunchedEffect(isScrollingLessonView) {
+        if (isScrollingLessonView) return@LaunchedEffect
+        if (userDragDistance.value == 0f) return@LaunchedEffect
+
+        settleUserDragDistance(
+            scope = scope,
+            userDragDistance = userDragDistance,
+            dragThresholdPx = dragToShowDayDetailsMinimumThresholdPx,
+            velocityY = 0f
+        )
     }
 
     val weekPagerState = rememberPagerState(
@@ -797,14 +810,13 @@ private class ContentNestedScrollConnection(
 
     override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
         val deltaY = available.y
+        val currentUserDragDistanceOnExpandable = userDragDistance.value
 
         // Only intercept downward drags (scrolling up) when the content is already at the top
-        if (deltaY <= 0f) return Offset.Zero
-        if (contentScrollState.value > 0) return Offset.Zero
+        if (contentScrollState.value > 0 && currentUserDragDistanceOnExpandable == 0f) return Offset.Zero
 
-        val current = userDragDistance.value
-        val newValue = (current + deltaY).coerceAtLeast(0f)
-        if (newValue == current) return Offset.Zero
+        val newValue = (currentUserDragDistanceOnExpandable + deltaY).coerceAtLeast(0f)
+        if (newValue == currentUserDragDistanceOnExpandable) return Offset.Zero
 
         scope.launch { userDragDistance.snapTo(newValue) }
         return Offset(x = 0f, y = deltaY)
