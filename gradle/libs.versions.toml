@@ -7,7 +7,7 @@ compose-multiplatform = "1.10.3"
 
 # AndroidX
 androidx-activityCompose = "1.13.0"
-androidx-browser = "1.9.0"
+androidx-browser = "1.10.0"
 androidx-core = "1.18.0"
 androidx-fragment = "1.8.9"
 androidx-icons = "1.7.8"
@@ -15,24 +15,24 @@ androidx-lifecycle = "2.10.0"
 androidx-room = "2.8.3" # Do not upgrade to a later version until https://issuetracker.google.com/issues/477055344 is fixed
 androidx-sqlite = "2.6.2"
 biometric = "1.1.0"
-workRuntimeKtx = "2.11.1"
+workRuntimeKtx = "2.11.2"
 
 # Compose
 compose-material3 = "1.10.0-alpha05"
 
 # Kotlin & KotlinX
 coroutines = "1.10.2"
-kotlinSerialization = "1.10.0"
+kotlinSerialization = "1.11.0"
 kotlinxDatetime = "0.7.1"
 
 # Koin
-koin = "4.2.0"
+koin = "4.2.1"
 
 # Ktor
-ktor = "3.4.1"
+ktor = "3.4.3"
 
 # Firebase / Google
-firebase-bom = "34.11.0"
+firebase-bom = "34.12.0"
 google-gms = "4.4.4"
 
 # Third-party
@@ -43,15 +43,15 @@ kmp-native-coroutines = "1.0.2"
 kmp-observable-viewmodel = "1.0.3"
 kermit = "2.1.0"
 navigationCompose = "2.9.2"
-posthogAndroid = "3.38.2"
+posthogAndroid = "3.42.1"
 
 # Navigation 3
-navigation3-ui = "1.0.0-alpha06"
-navigation3-material3-adaptive = "1.3.0-alpha06"
+navigation3-ui = "1.1.0"
+navigation3-material3-adaptive = "1.3.0-alpha07"
 navigation3-lifecycle = "2.10.0"
 
 # VPlanPlus
-sp24-kt = "1.0.1"
+sp24-kt = "1.1.0"
 
 [libraries]
 # AndroidX - Core
@@ -68,8 +68,8 @@ androidx-lifecycle-runtime-compose = { group = "org.jetbrains.androidx.lifecycle
 androidx-lifecycle-viewmodel = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-viewmodel", version.ref = "androidx-lifecycle" }
 
 # AndroidX - Compose UI
-androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version = "2026.03.00" }
-androidx-compose-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics", version = "1.10.5" }
+androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version = "2026.04.01" }
+androidx-compose-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics", version = "1.11.0" }
 androidx-icons-extended = { module = "androidx.compose.material:material-icons-extended", version.ref = "androidx-icons" }
 androidx-ui = { group = "androidx.compose.ui", name = "ui" }
 androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
@@ -171,12 +171,12 @@ ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 room = { id = "androidx.room", version.ref = "androidx-room" }
 
 # Firebase & Google
-firebase-crashlytics = { id = "com.google.firebase.crashlytics", version = "3.0.6" }
+firebase-crashlytics = { id = "com.google.firebase.crashlytics", version = "3.0.7" }
 google-gms = { id = "com.google.gms.google-services", version.ref = "google-gms" }
 
 # Third-party
 buildconfig = { id = "com.github.gmazzo.buildconfig", version.ref = "gradle-buildconfig-plugin" }
-stability-analyzer = { id = "com.github.skydoves.compose.stability.analyzer", version = "0.7.1" }
+stability-analyzer = { id = "com.github.skydoves.compose.stability.analyzer", version = "0.7.3" }
 
 # Convention plugins
 vplanplus-build-applicationConfig = { id = "vplanplus.build.applicationConfig" }

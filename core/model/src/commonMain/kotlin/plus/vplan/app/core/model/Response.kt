@@ -26,7 +26,6 @@ sealed class Response<out T> {
                 return when(response) {
                     is plus.vplan.lib.sp24.source.Response.Error.ParsingError -> ParsingError("")
                     is plus.vplan.lib.sp24.source.Response.Error.Other -> Other(response.message)
-                    is plus.vplan.lib.sp24.source.Response.Error.Cancelled -> Cancelled
                     is plus.vplan.lib.sp24.source.Response.Error.OnlineError.ConnectionError -> OnlineError.ConnectionError
                     is plus.vplan.lib.sp24.source.Response.Error.OnlineError.Unauthorized -> OnlineError.Unauthorized
                     is plus.vplan.lib.sp24.source.Response.Error.OnlineError.NotFound -> OnlineError.NotFound
@@ -35,5 +34,3 @@ sealed class Response<out T> {
         }
     }
 }
-
-inline fun <reified T> T.asSuccess() = Response.Success(data = this)

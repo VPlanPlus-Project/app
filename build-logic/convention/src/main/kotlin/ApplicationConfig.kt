@@ -9,7 +9,7 @@ val applicationConfig = ApplicationConfig(
     channel = ApplicationConfig.Channel.Production,
     android = ApplicationConfig.Android(
         minSdk = 24,
-        targetSdk = 36
+        targetSdk = 37
     )
 )
 
@@ -38,7 +38,6 @@ class ApplicationConfig(
     val versionName = "${versionMajor}.${versionMinor}.${versionPatch}.${build}-${channel.suffix}"
 
     val cfBundleShortVersionString = "${versionMajor}.${versionMinor}.${versionPatch}"
-    val cfBundleVersion = versionCode
 
     data class Android(
         val minSdk: Int,
